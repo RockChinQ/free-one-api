@@ -12,7 +12,8 @@
     "element-plus": "^2.3.14",
     "mockjs": "^1.1.0",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "vue-router": "^4.2.4",
+    "vue3-clipboard": "^1.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.3.1",

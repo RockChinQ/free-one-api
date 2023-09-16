@@ -14,3 +14,15 @@ Mock.mock(/\/api\/channel\/details\/(\d+)/, "get", channel_details)
 import { adapter_list } from './data/adapter/list.js'
 
 Mock.mock("/api/adapter/list", "get", adapter_list)
+
+import { key_list } from './data/key/list.js'
+
+Mock.mock("/api/key/list", "get", key_list)
+
+import { key_raw } from './data/key/raw.js'
+
+Mock.mock(/\/api\/key\/raw\/(\d+)/, "get", key_raw)
+
+import { create_result } from './data/key/create.js'
+
+Mock.mock("/api/key/create", "post", create_result)

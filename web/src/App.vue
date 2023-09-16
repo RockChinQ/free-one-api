@@ -1,6 +1,7 @@
 <script setup>
 import Home from './components/Home.vue';
 import Channel from './components/Channel.vue';
+import APIKey from './components/APIKey.vue';
 
 import { ref } from 'vue';
 
@@ -9,7 +10,7 @@ const currentTab = ref('home');
 </script>
 
 <template>
-    <div id="topbar_container" class="flex_container">
+    <div id="topbar_container">
         <div id="logo_container" class="flex_container">
             <a class="no_url_style flex_container" href="/">
                 <img id="logo" src="./assets/logo.png" alt="logo">
@@ -17,11 +18,13 @@ const currentTab = ref('home');
         </div>
         <div class="tab_btn flex_container" @click="currentTab = 'home'">Home</div>
         <div class="tab_btn flex_container" @click="currentTab = 'channel'">Channels</div>
+        <div class="tab_btn flex_container" @click="currentTab = 'apikey'">API Keys</div>
     </div>
 
     <div id="content">
         <Home v-if="currentTab === 'home'"></Home>
         <Channel v-if="currentTab === 'channel'"></Channel>
+        <APIKey v-if="currentTab === 'apikey'"></APIKey>
     </div>
 </template>
 
@@ -38,6 +41,9 @@ const currentTab = ref('home');
     box-sizing: border-box;
     user-select: none;
     border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 #logo_container {
