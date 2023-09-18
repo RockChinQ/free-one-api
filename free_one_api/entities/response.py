@@ -44,3 +44,8 @@ class Response:
 
     function_call: FunctionCall
     """Function call."""
+
+    def __init__(self, finish_reason: FinishReason, normal_message: str = None, function_call: FunctionCall = None):
+        self.finish_reason = finish_reason
+        self.normal_message = normal_message
+        self.function_call = function_call

@@ -28,6 +28,13 @@ class WebAPIGroup(routergroup.APIGroup):
             chan_list = await self.chanmgr.list_channels()
             
             chan_list_json = [channel.Channel.dump_channel(chan) for chan in chan_list]
+            chan_list_json = [{
+                "id": chan["id"],
+                "name": chan["name"],
+                "adapter": chan["adapter"]['type'],
+                "enabled": chan["enabled"],
+                "latency": chan["latency"],
+            } for chan in chan_list_json]
             
             return quart.jsonify({
                 "code": 0,
@@ -146,11 +153,13 @@ class WebAPIGroup(routergroup.APIGroup):
             
         @self.api("/adapter/list", ["GET"])
         async def adapter_list():
-            return quart.jsonify({
+            res = {
                 "code": 0,
                 "message": "ok",
                 "data": adapter.list_adapters(),
-            })
+            }
+            
+            return quart.jsonify(res)
             
         @self.api("/key/list", ["GET"])
         async def key_list():

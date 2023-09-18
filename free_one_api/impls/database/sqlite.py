@@ -48,7 +48,7 @@ class SQLiteDB(dbmod.DatabaseInterface):
                     id=row[0],
                     name=row[1],
                     adapter=adapter.load_adapter(json.loads(row[2])),
-                    model_mapping=row[3],
+                    model_mapping=json.loads(row[3]),
                     enabled=bool(row[4]),
                     latency=row[5],
                 )
@@ -61,7 +61,7 @@ class SQLiteDB(dbmod.DatabaseInterface):
                     id=row[0],
                     name=row[1],
                     adapter=adapter.load_adapter(json.loads(row[2])),
-                    model_mapping=row[3],
+                    model_mapping=json.loads(row[3]),
                     enabled=bool(row[4]),
                     latency=row[5],
                 ) for row in rows]
@@ -70,8 +70,8 @@ class SQLiteDB(dbmod.DatabaseInterface):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("INSERT INTO channel (name, adapter, model_mapping, enabled, latency) VALUES (?, ?, ?, ?, ?)", (
                 chan.name,
-                adapter.dump_adapter(chan.adapter),
-                chan.model_mapping,
+                json.dumps(adapter.dump_adapter(chan.adapter)),
+                json.dumps(chan.model_mapping),
                 int(chan.enabled),
                 chan.latency,
             ))
@@ -84,8 +84,8 @@ class SQLiteDB(dbmod.DatabaseInterface):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("UPDATE channel SET name = ?, adapter = ?, model_mapping = ?, enabled = ?, latency = ? WHERE id = ?", (
                 chan.name,
-                adapter.dump_adapter(chan.adapter),
-                chan.model_mapping,
+                json.dumps(adapter.dump_adapter(chan.adapter)),
+                json.dumps(chan.model_mapping),
                 int(chan.enabled),
                 chan.latency,
                 chan.id,

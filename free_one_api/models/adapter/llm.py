@@ -10,7 +10,7 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
     
     config: dict
 
-    @property
+    @abc.abstractclassmethod
     def name(self) -> str:
         """Name of this adapter.
         
@@ -19,27 +19,27 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """
         return "not implemented"
 
-    @property
+    @abc.abstractclassmethod
     def description(self) -> str:
         """Description of this adapter."""
         return self.__class__.__doc__
 
-    @property
+    @abc.abstractproperty
     def supported_models(self) -> list[str]:
         """Return models supported by this reverse lib."""
         return []
 
-    @property
+    @abc.abstractproperty
     def function_call_supported(self) -> bool:
         """True if this adapter supports function call."""
         return False
     
-    @property
+    @abc.abstractproperty
     def multi_round_supported(self) -> bool:
         """True if this adapter supports multi round conversation."""
         return False
 
-    @property
+    @abc.abstractclassmethod
     def config_comment(self) -> str:
         """Comments of the config schema.
         
@@ -48,7 +48,7 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """
         return ""
     
-    @property
+    @abc.abstractclassmethod
     def supported_path(self) -> str:
         """Returns which path of OpenAI API should this adapter serve.
         
@@ -65,14 +65,13 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """
         self.config = config
 
-    @abc.abstractmethod
     def get_config(self) -> dict:
         """Get set config.
         
         Returns:
             str: set config, empty if no config needed.
         """
-        return {}
+        return self.config
 
     @abc.abstractmethod
     async def test(self) -> (bool, str):

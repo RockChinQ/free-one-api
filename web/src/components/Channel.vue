@@ -491,7 +491,7 @@ function applyChannelDetails() {
                 <!--Adapter configuration-->
                 <el-form-item label="Config">
                     <el-input v-model="showingChannelData.details.adapter.config" rows="8" type="textarea" />
-                    <el-popover placement="bottom" :title="showingChannelData.details.adapter.type" :width="400" trigger="click">
+                    <el-popover placement="bottom" :title="showingChannelData.details.adapter.type" :width="700" trigger="click">
                         <template #reference>
                             <el-button class="m-2">Config Comment</el-button>
                         </template>

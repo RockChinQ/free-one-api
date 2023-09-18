@@ -11,6 +11,8 @@ from ..models.channel import mgr as chanmgr
 from ..models.key import mgr as keymgr
 from ..models.router import group as routergroup
 
+from .adapter import revChatGPT
+
 
 class Application:
     """Application instance."""

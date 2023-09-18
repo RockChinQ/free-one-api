@@ -17,7 +17,7 @@ adapters: dict[str, llm.LLMLibAdapter] = {}
 def llm_adapter(cls: llm.LLMLibAdapter) -> llm.LLMLibAdapter:
     """Get adapter by name."""
 
-    adapters[cls.name] = cls
+    adapters[cls.name()] = cls
 
     return cls
 
@@ -27,7 +27,7 @@ def list_adapters() -> list[str]:
     return [
         {
             "name": name,
-            "config_comment": cls.config_comment
+            "config_comment": cls.config_comment()
         } for name, cls in adapters.items()
     ]
 
@@ -42,8 +42,8 @@ def load_adapter(data: dict) -> llm.LLMLibAdapter:
 def dump_adapter(adapter: llm.LLMLibAdapter) -> dict:
     """Dump adapter to dict."""
     return {
-        "type": adapter.name,
-        "config": adapter.config
+        "type": adapter.name(),
+        "config": adapter.get_config()
     }
 
 
