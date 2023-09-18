@@ -92,9 +92,9 @@ class SQLiteDB(dbmod.DatabaseInterface):
             ))
             await db.commit()
 
-    async def delete_channel(self, chan: channel.Channel) -> None:
+    async def delete_channel(self, chan_id: int) -> None:
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("DELETE FROM channel WHERE id = ?", (chan.id,))
+            await db.execute("DELETE FROM channel WHERE id = ?", (chan_id,))
             await db.commit()
 
     async def list_keys(self) -> list[apikey.FreeOneAPIKey]:
