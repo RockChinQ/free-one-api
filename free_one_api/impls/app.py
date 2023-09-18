@@ -84,11 +84,13 @@ async def make_application(config_path: str) -> Application:
     from .channel import mgr as chanmgr
     
     channelmgr = chanmgr.ChannelManager(dbmgr)
+    await channelmgr.list_channels()
     
     # make key manager
     from .key import mgr as keymgr
     
     apikeymgr = keymgr.APIKeyManager(dbmgr)
+    await apikeymgr.list_keys()
     
     # make router manager
     from .router import mgr as routermgr
