@@ -39,13 +39,6 @@ class SQLiteDB(dbmod.DatabaseInterface):
             await db.execute(channel_table_sql)
             await db.execute(key_table_sql)
             await db.commit()
-            print("Initialized database.")
-            # show tables
-            async with db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name") as cursor:
-                rows = await cursor.fetchall()
-                print("Tables:")
-                for row in rows:
-                    print(row[0])
             
     async def get_channel(self, channel_id: int) -> channel.Channel:
         async with aiosqlite.connect(self.db_path) as db:
@@ -137,7 +130,7 @@ class SQLiteDB(dbmod.DatabaseInterface):
             ))
             await db.commit()
 
-    async def delete_key(self, key: apikey.FreeOneAPIKey) -> None:
+    async def delete_key(self, key_id: int) -> None:
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("DELETE FROM apikey WHERE id = ?", (key.id,))
+            await db.execute("DELETE FROM apikey WHERE id = ?", (key_id,))
             await db.commit()

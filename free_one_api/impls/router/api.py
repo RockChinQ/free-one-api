@@ -203,8 +203,8 @@ class WebAPIGroup(routergroup.APIGroup):
                 
                 key_name = data["name"]
                 
-                if self.keymgr.has_key_name(key_name):
-                    raise Exception("key name already exists")
+                if await self.keymgr.has_key_name(key_name):
+                    raise Exception("key name already exists: "+key_name)
                 
                 key = apikey.FreeOneAPIKey.make_new(key_name)
                 
@@ -234,6 +234,8 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": "ok",
                 })
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 return quart.jsonify({
                     "code": 1,
                     "message": str(e),

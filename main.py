@@ -11,7 +11,7 @@ os.chdir('./data')
 from free_one_api.impls import app
 
 def main():
-    application = asyncio.run(app.make_application("./config.yml"))
+    application = asyncio.run(app.make_application("./config.yaml"))
 
     application.run()
 

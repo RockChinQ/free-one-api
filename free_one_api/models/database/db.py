@@ -47,6 +47,6 @@ class DatabaseInterface(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    async def delete_key(self, key: apikey.FreeOneAPIKey) -> None:
+    async def delete_key(self, key_id: int) -> None:
         """Delete a key."""
         return
