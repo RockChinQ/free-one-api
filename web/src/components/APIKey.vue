@@ -20,7 +20,7 @@ function refreshKeyList() {
             keyList.value = res.data.data;
             // 把每个key的created_at转换为本地时间
             keyList.value.forEach((key) => {
-                key.created_at = new Date(key.created_at).toLocaleString();
+                key.created_at = new Date(key.created_at*1000).toLocaleString();
             });
 
             ElNotification({

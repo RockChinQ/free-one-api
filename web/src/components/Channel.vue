@@ -97,9 +97,23 @@ function testChannelLatancy(channel_id) {
         .then(res => {
             console.log(res);
 
-            for (let i = 0; i < channelList.value.length; i++) {
-                if (channelList.value[i].id == channel_id) {
-                    channelList.value[i].latency = res.data.data.latency;
+            if (res.data.code == 0) {
+                
+                for (let i = 0; i < channelList.value.length; i++) {
+                    if (channelList.value[i].id == channel_id) {
+                        channelList.value[i].latency = res.data.data.latency;
+                    }
+                }
+            } else {
+                ElNotification({
+                    message: 'Failed: ' + res.data.message,
+                    type: 'error'
+                })
+                
+                for (let i = 0; i < channelList.value.length; i++) {
+                    if (channelList.value[i].id == channel_id) {
+                        channelList.value[i].latency = -1;
+                    }
                 }
             }
         })
@@ -252,6 +266,9 @@ function showDetails(channel_id) {
                     showingChannelData.details = res.data.data;
                     showingChannelIndex.value = i;
                     detailsDialogVisible.value = true;
+
+                    showingChannelData.details.adapter.config = JSON.stringify(showingChannelData.details.adapter.config, null, 4);
+                    showingChannelData.details.model_mapping = JSON.stringify(showingChannelData.details.model_mapping, null, 4);
                 })
                 .catch(err => {
                     console.log(err);
@@ -283,8 +300,8 @@ function showCreateChannelDialog() {
 }
 
 function validateChannel() {
-    if (showingChannelData.model_mapping == "") {
-        showingChannelData.model_mapping = "{}"
+    if (showingChannelData.details.model_mapping == "") {
+        showingChannelData.details.model_mapping = `{}`
     }
 
     if (showingChannelData.details.adapter.type == "") {
@@ -297,6 +314,27 @@ function validateChannel() {
 
     if (showingChannelData.details.adapter.config == "") {
         showingChannelData.details.adapter.config = `{}`
+    }
+
+    // check if model_mapping and  adapter.config are valid json
+    try {
+        showingChannelData.details.model_mapping = JSON.parse(showingChannelData.details.model_mapping);
+    } catch (e) {
+        ElNotification({
+            message: 'Model mapping is not a valid JSON.',
+            type: 'error'
+        })
+        return false;
+    }
+
+    try {
+        showingChannelData.details.adapter.config = JSON.parse(showingChannelData.details.adapter.config);
+    } catch (e) {
+        ElNotification({
+            message: 'Adapter config is not a valid JSON.',
+            type: 'error'
+        })
+        return false;
     }
 
     if (showingChannelData.details.name == "") {
@@ -349,6 +387,11 @@ function applyChannelDetails() {
                     type: 'error'
                 })
             })
+            .finally(() => {
+                // reset model_mapping and adapter.config to string
+                showingChannelData.details.model_mapping = JSON.stringify(showingChannelData.details.model_mapping, null, 4);
+                showingChannelData.details.adapter.config = JSON.stringify(showingChannelData.details.adapter.config, null, 4);
+            })
     } else {
         axios.put('/api/channel/update/' + showingChannelData.details.id, showingChannelData.details)
             .then(res => {
@@ -373,6 +416,11 @@ function applyChannelDetails() {
                     message: 'Failed to update channel.',
                     type: 'error'
                 })
+            })
+            .finally(() => {
+                // reset model_mapping and adapter.config to string
+                showingChannelData.details.model_mapping = JSON.stringify(showingChannelData.details.model_mapping, null, 4);
+                showingChannelData.details.adapter.config = JSON.stringify(showingChannelData.details.adapter.config, null, 4);
             })
     }
 }
