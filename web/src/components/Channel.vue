@@ -101,7 +101,8 @@ function testChannelLatancy(channel_id) {
                 
                 for (let i = 0; i < channelList.value.length; i++) {
                     if (channelList.value[i].id == channel_id) {
-                        channelList.value[i].latency = res.data.data.latency;
+                        channelList.value[i].latency = parseInt(res.data.data.latency*100)/100;
+                        break
                     }
                 }
             } else {
@@ -113,6 +114,7 @@ function testChannelLatancy(channel_id) {
                 for (let i = 0; i < channelList.value.length; i++) {
                     if (channelList.value[i].id == channel_id) {
                         channelList.value[i].latency = -1;
+                        break
                     }
                 }
             }
@@ -126,6 +128,7 @@ function testChannelLatancy(channel_id) {
             for (let i = 0; i < channelList.value.length; i++) {
                 if (channelList.value[i].id == channel_id) {
                     channelList.value[i].latency = -1
+                    break
                 }
             }
         })
@@ -453,7 +456,7 @@ function applyChannelDetails() {
                 </text>
                 <text class="channel_latency">
                     <el-button class="channel_latency_box" @click="testChannelLatancy(channel.id)"
-                        :type="channel.latency > 0 ? 'success' : 'default'" plain>{{ channel.latency > 0 ? channel.latency +
+                        :type="channel.latency > 0 ? 'success' : 'default'" plain>{{ channel.latency >= 0 ? channel.latency +
                             's' :
                             'N/A' }}</el-button>
                 </text>

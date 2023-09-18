@@ -1,4 +1,5 @@
 import json
+import traceback
 
 import quart
 
@@ -146,6 +147,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     },
                 })
             except Exception as e:
+                traceback.print_exc()
                 return quart.jsonify({
                     "code": 1,
                     "message": str(e),

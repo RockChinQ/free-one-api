@@ -1,5 +1,6 @@
 """Channel management."""
 import time
+import asyncio
 
 from ...entities import channel
 from ...models.database import db
@@ -99,7 +100,7 @@ class ChannelManager(mgr.AbsChannelManager):
             await chan.adapter.test()
         except Exception as e:
             raise ValueError("Test failed.") from e
-        latency = time.time() - now
+        latency = int((time.time() - now)*100)/100
         
         chan.latency = latency
         await self.update_channel(chan)
