@@ -319,6 +319,14 @@ function validateChannel() {
         showingChannelData.details.adapter.config = `{}`
     }
 
+    if (showingChannelData.details.name == "") {
+        ElNotification({
+            message: 'Channel name is required.',
+            type: 'error'
+        })
+        return false;
+    }
+
     // check if model_mapping and  adapter.config are valid json
     try {
         showingChannelData.details.model_mapping = JSON.parse(showingChannelData.details.model_mapping);
@@ -340,14 +348,6 @@ function validateChannel() {
         return false;
     }
 
-    if (showingChannelData.details.name == "") {
-        ElNotification({
-            message: 'Channel name is required.',
-            type: 'error'
-        })
-        return false;
-    }
-
     return true;
 }
 
@@ -360,6 +360,12 @@ function applyChannelDetails() {
     console.log(showingChannelData);
 
     if (!validateChannel()) {
+        if (typeof showingChannelData.details.model_mapping === 'object') {
+            showingChannelData.details.model_mapping = JSON.stringify(showingChannelData.details.model_mapping, null, 4);
+        }
+        if (typeof showingChannelData.details.adapter.config === 'object') {
+            showingChannelData.details.adapter.config = JSON.stringify(showingChannelData.details.adapter.config, null, 4);
+        }
         return;
     }
 
