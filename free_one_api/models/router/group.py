@@ -1,5 +1,7 @@
 import abc
 
+import quart
+
 from ..database import db
 
 
@@ -11,11 +13,14 @@ class APIGroup(metaclass=abc.ABCMeta):
     e.g. /api
     """
     
+    token: str
+    """Static token for all groups."""
+    
     apis: list[tuple[str, list[str], callable, dict]]
     
     dbmgr: db.DatabaseInterface
     
-    def api(self, path: str, methods: list[str], **kwargs):
+    def api(self, path: str, methods: list[str], auth: bool=False, **kwargs):
         """Register an API.
         
         Args:
@@ -26,8 +31,34 @@ class APIGroup(metaclass=abc.ABCMeta):
 
         def decorator(handler):
             """Decorator."""
-            self.apis.append((self.group_name+path, methods, handler, kwargs))
-            return handler
+            
+            async def authenticated_handler(*args, **kwargs):
+                """Authenticated handler."""
+                auth = quart.request.headers.get("Authorization")
+                if auth is None:
+                    return quart.jsonify({
+                        "code": 1,
+                        "message": "No authorization provided."
+                    })
+                if not auth.startswith("Bearer "):
+                    return quart.jsonify({
+                        "code": 2,
+                        "message": "Wrong authorization type."
+                    })
+                token = auth[7:]
+                if token != APIGroup.token:
+                    return quart.jsonify({
+                        "code": 3,
+                        "message": "Wrong token, please re-login."
+                    })
+                return await handler(*args, **kwargs)
+            
+            new_handler = handler
+            if auth:
+                new_handler = authenticated_handler
+            
+            self.apis.append((self.group_name+path, methods, new_handler, kwargs))
+            return new_handler
 
         return decorator
 

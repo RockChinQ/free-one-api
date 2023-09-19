@@ -3,6 +3,7 @@ import os
 import quart
 
 from ...models.router import group as routergroup
+from ...common import crypto
 
 
 class WebPageGroup(routergroup.APIGroup):
@@ -13,6 +14,24 @@ class WebPageGroup(routergroup.APIGroup):
         super().__init__(None)
         self.frontend_path = config["frontend_path"] if "frontend_path" in config else "./web/dist/"
         self.group_name = ""
+        
+        @self.api("/check_password", ["POST"])
+        async def check_password():
+            data = await quart.request.get_json()
+            if "password" not in data:
+                return quart.jsonify({
+                    "code": 1,
+                    "message": "No password provided."
+                })
+            if data["password"] != routergroup.APIGroup.token:
+                return quart.jsonify({
+                    "code": 2,
+                    "message": "Wrong token."
+                })
+            return quart.jsonify({
+                "code": 0,
+                "message": "ok"
+            })
         
         @self.api("/ping", ["GET"])
         async def ping():

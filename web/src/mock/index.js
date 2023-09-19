@@ -26,3 +26,8 @@ Mock.mock(/\/api\/key\/raw\/(\d+)/, "get", key_raw)
 import { create_result } from './data/key/create.js'
 
 Mock.mock("/api/key/create", "post", create_result)
+
+Mock.mock("/check_password", "post", {
+    "code": 0,
+    "message": "ok",
+})

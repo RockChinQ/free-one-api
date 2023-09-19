@@ -23,7 +23,7 @@ class WebAPIGroup(routergroup.APIGroup):
         self.keymgr = keymgr
         self.group_name = "/api"
         
-        @self.api("/channel/list", ["GET"])
+        @self.api("/channel/list", ["GET"], auth=True)
         async def channel_list():
             # load channels from db to memory
             chan_list = await self.chanmgr.list_channels()
@@ -215,7 +215,7 @@ class WebAPIGroup(routergroup.APIGroup):
                 key_name = data["name"]
                 
                 if await self.keymgr.has_key_name(key_name):
-                    raise Exception("key name already exists: "+key_name)
+                    raise ValueError("key name already exists: "+key_name)
                 
                 key = apikey.FreeOneAPIKey.make_new(key_name)
                 

@@ -2,10 +2,45 @@
 import Home from './components/Home.vue';
 import Channel from './components/Channel.vue';
 import APIKey from './components/APIKey.vue';
+import { setPassword, getPassword, clearPassword, checkPassword } from './common/account';
 
+import { ElMessageBox, ElMessage } from 'element-plus';
 import { ref } from 'vue';
 
 const currentTab = ref('home');
+
+function showLoginDialog() {
+    ElMessageBox.prompt('Please enter your token:', 'Enter token', {
+    confirmButtonText: 'OK',
+    inputErrorMessage: 'Invalid Format',
+    inputType: 'password',
+    inputPattern: /\S+/,
+  })
+    .then(({ value }) => {
+        // login
+        checkPassword(value)
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: 'Input canceled',
+      })
+    })
+}
+
+function switchTab(target){
+    if (getPassword() == ""){
+        showLoginDialog()
+        return
+    }
+
+    currentTab.value = target
+}
+
+function logout(){
+    clearPassword()
+    currentTab.value = 'home'
+}
 
 </script>
 
@@ -16,9 +51,16 @@ const currentTab = ref('home');
                 <img id="logo" src="./assets/logo.png" alt="logo">
                 <text id="project_name">Free One API</text></a>
         </div>
-        <div class="tab_btn flex_container" @click="currentTab = 'home'">Home</div>
-        <div class="tab_btn flex_container" @click="currentTab = 'channel'">Channels</div>
-        <div class="tab_btn flex_container" @click="currentTab = 'apikey'">API Keys</div>
+        <div class="tab_btn flex_container" @click="switchTab('home')">Home</div>
+        <div class="tab_btn flex_container" @click="switchTab('channel')">Channels</div>
+        <div class="tab_btn flex_container" @click="switchTab('apikey')">API Keys</div>
+        <div id="login_info">
+            <el-button :type="getPassword()==''?'success':'danger'"
+            @click="getPassword()==''?showLoginDialog():logout()"
+            >
+                {{ getPassword()==''?'Login':'Logout' }}
+            </el-button>
+        </div>
     </div>
 
     <div id="content">

@@ -3,6 +3,7 @@ import sys
 
 import yaml
 
+from ..common import crypto
 from .router import mgr as routermgr
 from .router import api as apigroup
 
@@ -51,10 +52,11 @@ default_config = {
         "path": "free_one_api.db",
     },
     "router": {
-        "port": 3000
+        "port": 3000,
+        "token": "12345678",
     },
     "web": {
-        "frontend_path": "../web/dist/"
+        "frontend_path": "../web/dist/",
     }
 }
 
@@ -94,6 +96,9 @@ async def make_application(config_path: str) -> Application:
     
     # make router manager
     from .router import mgr as routermgr
+    
+    # set router authentication token
+    routergroup.APIGroup.token = crypto.md5_digest(config['router']['token'])
     
     #   import all api groups
     from .router import api as apigroup

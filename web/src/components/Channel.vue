@@ -19,12 +19,20 @@ function refreshChannelList() {
     axios.get('/api/channel/list')
         .then(res => {
             console.log(res);
-            channelList.value = res.data.data;
-            ElNotification({
-                message: 'Successfully refreshed channel list.',
-                type: 'success',
-                duration: 1800
-            })
+            if (res.data.code != 0) {
+                ElNotification({
+                    message: 'Failed: ' + res.data.message,
+                    type: 'error'
+                })
+                return;
+            }else{
+                channelList.value = res.data.data;
+                ElNotification({
+                    message: 'Successfully refreshed channel list.',
+                    type: 'success',
+                    duration: 1800
+                })
+            }
         })
         .catch(err => {
             console.log(err);
