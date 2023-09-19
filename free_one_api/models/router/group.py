@@ -13,12 +13,20 @@ class APIGroup(metaclass=abc.ABCMeta):
     e.g. /api
     """
     
-    token: str
-    """Static token for all groups."""
+    tokens: list[str]
+    """Tokens for this group."""
     
-    apis: list[tuple[str, list[str], callable, dict]]
+    routers: list[tuple[str, list[str], callable, dict]]
     
     dbmgr: db.DatabaseInterface
+    
+    def set_tokens(self, tokens: list[str]):
+        """Set tokens for this group.
+        
+        Args:
+            tokens: tokens.
+        """
+        self.tokens = tokens
     
     def api(self, path: str, methods: list[str], auth: bool=False, **kwargs):
         """Register an API.
@@ -48,7 +56,7 @@ class APIGroup(metaclass=abc.ABCMeta):
                             "message": "Wrong authorization type."
                         })
                     token = auth[7:]
-                    if token != APIGroup.token:
+                    if token not in self.tokens:
                         return quart.jsonify({
                             "code": 3,
                             "message": "Wrong token, please re-login."
@@ -57,19 +65,19 @@ class APIGroup(metaclass=abc.ABCMeta):
                 new_handler = authenticated_handler
                 new_handler.__name__ = handler.__name__
             
-            self.apis.append((self.group_name+path, methods, new_handler, kwargs))
+            self.routers.append((self.group_name+path, methods, new_handler, kwargs))
             return new_handler
 
         return decorator
 
     def __init__(self, dbmgr: db.DatabaseInterface):
-        self.apis = []
+        self.routers = []
         self.dbmgr = dbmgr
         
-    def get_apis(self):
+    def get_routers(self):
         """Get all APIs in this group.
         
         Returns:
             list of APIs.
         """
-        return self.apis
+        return self.routers

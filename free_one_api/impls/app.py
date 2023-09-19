@@ -97,21 +97,19 @@ async def make_application(config_path: str) -> Application:
     # make router manager
     from .router import mgr as routermgr
     
-    # set router authentication token
-    routergroup.APIGroup.token = crypto.md5_digest(config['router']['token'])
-    
     #   import all api groups
     from .router import api as apigroup
     from .router import web as webgroup
     
     # ========= API Groups =========
     group_api = apigroup.WebAPIGroup(dbmgr, channelmgr, apikeymgr)
-    group_web = webgroup.WebPageGroup(config['web'])
+    group_api.tokens = [crypto.md5_digest(config['router']['token'])]
+    group_web = webgroup.WebPageGroup(config['web'], config['router'])
     
     paths = []
     
-    paths += group_web.get_apis()
-    paths += group_api.get_apis()
+    paths += group_web.get_routers()
+    paths += group_api.get_routers()
     
     # ========= API Groups =========
     

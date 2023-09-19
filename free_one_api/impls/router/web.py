@@ -10,9 +10,9 @@ class WebPageGroup(routergroup.APIGroup):
     
     frontend_path: str
     
-    def __init__(self, config: dict):
+    def __init__(self, webcfg: dict, routercfg: dict):
         super().__init__(None)
-        self.frontend_path = config["frontend_path"] if "frontend_path" in config else "./web/dist/"
+        self.frontend_path = webcfg["frontend_path"] if "frontend_path" in webcfg else "./web/dist/"
         self.group_name = ""
         
         @self.api("/check_password", ["POST"])
@@ -23,7 +23,7 @@ class WebPageGroup(routergroup.APIGroup):
                     "code": 1,
                     "message": "No password provided."
                 })
-            if data["password"] != routergroup.APIGroup.token:
+            if data["password"] != crypto.md5_digest(routercfg["token"]):
                 return quart.jsonify({
                     "code": 2,
                     "message": "Wrong token."
