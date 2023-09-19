@@ -32,30 +32,30 @@ class APIGroup(metaclass=abc.ABCMeta):
         def decorator(handler):
             """Decorator."""
             
-            async def authenticated_handler(*args, **kwargs):
-                """Authenticated handler."""
-                auth = quart.request.headers.get("Authorization")
-                if auth is None:
-                    return quart.jsonify({
-                        "code": 1,
-                        "message": "No authorization provided."
-                    })
-                if not auth.startswith("Bearer "):
-                    return quart.jsonify({
-                        "code": 2,
-                        "message": "Wrong authorization type."
-                    })
-                token = auth[7:]
-                if token != APIGroup.token:
-                    return quart.jsonify({
-                        "code": 3,
-                        "message": "Wrong token, please re-login."
-                    })
-                return await handler(*args, **kwargs)
-            
             new_handler = handler
             if auth:
+                async def authenticated_handler(*args, **kwargs):
+                    """Authenticated handler."""
+                    auth = quart.request.headers.get("Authorization")
+                    if auth is None:
+                        return quart.jsonify({
+                            "code": 1,
+                            "message": "No authorization provided."
+                        })
+                    if not auth.startswith("Bearer "):
+                        return quart.jsonify({
+                            "code": 2,
+                            "message": "Wrong authorization type."
+                        })
+                    token = auth[7:]
+                    if token != APIGroup.token:
+                        return quart.jsonify({
+                            "code": 3,
+                            "message": "Wrong token, please re-login."
+                        })
+                    return await handler(*args, **kwargs)
                 new_handler = authenticated_handler
+                new_handler.__name__ = handler.__name__
             
             self.apis.append((self.group_name+path, methods, new_handler, kwargs))
             return new_handler

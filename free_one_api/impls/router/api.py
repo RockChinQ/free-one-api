@@ -43,7 +43,7 @@ class WebAPIGroup(routergroup.APIGroup):
                 "data": chan_list_json,
             })
         
-        @self.api("/channel/create", ["POST"])
+        @self.api("/channel/create", ["POST"], auth=True)
         async def channel_create():
             data = await quart.request.get_json()
             
@@ -56,7 +56,7 @@ class WebAPIGroup(routergroup.APIGroup):
                 "message": "ok",
             })
             
-        @self.api("/channel/delete/<int:chan_id>", ["DELETE"])
+        @self.api("/channel/delete/<int:chan_id>", ["DELETE"], auth=True)
         async def channel_delete(chan_id: int):
             try:
                 await self.chanmgr.delete_channel(chan_id)
@@ -71,7 +71,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/channel/details/<int:chan_id>", ["GET"])
+        @self.api("/channel/details/<int:chan_id>", ["GET"], auth=True)
         async def channel_details(chan_id: int):
             try:
                 chan = await self.chanmgr.get_channel(chan_id)
@@ -87,7 +87,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/channel/update/<int:chan_id>", ["PUT"])
+        @self.api("/channel/update/<int:chan_id>", ["PUT"], auth=True)
         async def channel_update(chan_id: int):
             try:
                 chan = channel.Channel.load_channel(await quart.request.get_json())
@@ -104,7 +104,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/channel/enable/<int:chan_id>", ["POST"])
+        @self.api("/channel/enable/<int:chan_id>", ["POST"], auth=True)
         async def channel_enable(chan_id: int):
             try:
                 await self.chanmgr.enable_channel(chan_id)
@@ -119,7 +119,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/channel/disable/<int:chan_id>", ["POST"])
+        @self.api("/channel/disable/<int:chan_id>", ["POST"], auth=True)
         async def channel_disable(chan_id: int):
             try:
                 await self.chanmgr.disable_channel(chan_id)
@@ -134,7 +134,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/channel/test/<int:chan_id>", ["POST"])
+        @self.api("/channel/test/<int:chan_id>", ["POST"], auth=True)
         async def channel_test(chan_id: int):
             try:
                 latency = await self.chanmgr.test_channel(chan_id)
@@ -153,7 +153,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/adapter/list", ["GET"])
+        @self.api("/adapter/list", ["GET"], auth=True)
         async def adapter_list():
             res = {
                 "code": 0,
@@ -163,7 +163,7 @@ class WebAPIGroup(routergroup.APIGroup):
             
             return quart.jsonify(res)
             
-        @self.api("/key/list", ["GET"])
+        @self.api("/key/list", ["GET"], auth=True)
         async def key_list():
             try:
                 key_list = await self.keymgr.list_keys()
@@ -189,7 +189,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/key/raw/<int:key_id>", ["GET"])
+        @self.api("/key/raw/<int:key_id>", ["GET"], auth=True)
         async def key_raw(key_id: int):
             try:
                 key = await self.keymgr.get_key(key_id)
@@ -207,7 +207,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
             
-        @self.api("/key/create", ["POST"])
+        @self.api("/key/create", ["POST"], auth=True)
         async def key_create():
             try:
                 data = await quart.request.get_json()
@@ -235,7 +235,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "message": str(e),
                 })
 
-        @self.api("/key/revoke/<int:key_id>", ["DELETE"])
+        @self.api("/key/revoke/<int:key_id>", ["DELETE"], auth=True)
         async def key_revoke(key_id: int):
             try:
                 await self.keymgr.revoke_key(key_id)
