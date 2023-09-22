@@ -13,6 +13,12 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 ### Supported LLM libs
 
 - [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)
+    - gpt-3.5-turbo
+    - gpt-4
+
+### Supported API paths
+
+- `/v1/chat/completions`
 
 ## Setup
 
@@ -64,4 +70,24 @@ curl http://localhost:3000/v1/chat/completions \
     ],
     "stream": true
   }'
+```
+
+```python
+import openai
+
+openai.api_base = "http://localhost:3000/v1"
+openai.api_key = "generated key"
+
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {
+            "role": "user",
+            "content": "hello, how are you?"
+        }
+    ],
+    stream=False,
+)
+
+print(response)
 ```
