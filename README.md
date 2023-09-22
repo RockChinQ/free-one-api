@@ -99,3 +99,9 @@ response = openai.ChatCompletion.create(
 
 print(response)
 ```
+
+## Quick Test
+
+api_base: https://foa.rockchin.top/v1  
+api_key: sk-foaumWEd2Jdfb9wrDSEqE5zEJo81XKd0v76yPsgsTWQgRPpe  
+model: gpt-3.5-turbo  
