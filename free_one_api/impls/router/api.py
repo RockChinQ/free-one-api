@@ -45,16 +45,23 @@ class WebAPIGroup(routergroup.APIGroup):
         
         @self.api("/channel/create", ["POST"], auth=True)
         async def channel_create():
-            data = await quart.request.get_json()
-            
-            chan = channel.Channel.load_channel(data)
-            
-            await self.chanmgr.create_channel(chan)
-            
-            return quart.jsonify({
-                "code": 0,
-                "message": "ok",
-            })
+            try:
+                data = await quart.request.get_json()
+                
+                chan = channel.Channel.load_channel(data)
+                
+                await self.chanmgr.create_channel(chan)
+                
+                return quart.jsonify({
+                    "code": 0,
+                    "message": "ok",
+                })
+            except Exception as e:
+                traceback.print_exc()
+                return quart.jsonify({
+                    "code": 1,
+                    "message": str(e),
+                })
             
         @self.api("/channel/delete/<int:chan_id>", ["DELETE"], auth=True)
         async def channel_delete(chan_id: int):

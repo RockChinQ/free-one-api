@@ -25,8 +25,8 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         before = time.time()
         id_suffix = "".join(random.choices(string.ascii_letters+string.digits, k=29))
         
+        t = int(time.time())
         async def _gen():
-            index = 0
             async for resp in chan.adapter.query(req):
                 
                 if (resp.normal_message is None or len(resp.normal_message) == 0) and resp.finish_reason == response.FinishReason.NULL:
@@ -35,17 +35,16 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 yield "data: {}\n\n".format(json.dumps({
                     "id": "chatcmpl-"+id_suffix,
                     "object": "chat.completion.chunk",
-                    "created": int(time.time()),
+                    "created": t,
                     "model": req.model,
                     "choices": [{
-                        "index": index,
+                        "index": 0,
                         "delta": {
                             "content": resp.normal_message,
-                        },
+                        } if resp.normal_message else {},
                         "finish_reason": resp.finish_reason.value
                     }]
                 }))
-                index += 1
             yield "data: [DONE]\n\n"
         
         spent_ms = int((time.time() - before)*1000)
