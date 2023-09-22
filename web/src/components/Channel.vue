@@ -305,7 +305,7 @@ function showCreateChannelDialog() {
         },
         "model_mapping": `{}`,
         "enabled": true, // no need for creation
-        "latency": 0.13 // no need for creation
+        "latency": -1 // no need for creation
     };
     detailsDialogVisible.value = true;
 }
