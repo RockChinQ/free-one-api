@@ -1,4 +1,9 @@
 import typing
+import traceback
+import uuid
+import random
+
+import revChatGPT.V1 as chatgpt
 
 from ...models import adapter
 from ...models.adapter import llm
@@ -17,18 +22,18 @@ class RevChatGPTAdapter(llm.LLMLibAdapter):
     def description(self) -> str:
         return "Use acheong08/ChatGPT to access reverse engineering OpenAI ChatGPT web edition."
 
-    @property
     def supported_models(self) -> list[str]:
         return [
             "gpt-3.5-turbo",
             "gpt-4"
         ]
-        
-    @property
+
     def function_call_supported(self) -> bool:
         return False
-    
-    @property
+
+    def stream_mode_supported(self) -> bool:
+        return True    
+
     def multi_round_supported(self) -> bool:
         return True
     
@@ -61,17 +66,78 @@ Please refer to https://github.com/acheong08/ChatGPT
     
     @classmethod
     def supported_path(self) -> str:
-        return "/v1/chat/completion"
+        return "/v1/chat/completions"
+    
+    chatbot: chatgpt.AsyncChatbot
     
     def __init__(self, config: dict):
         self.config = config
-    
+        self.chatbot = chatgpt.AsyncChatbot(
+            config=config,
+            base_url="https://chatproxy.rockchin.top/api/"
+        )
     
     async def test(self) -> (bool, str):
-        return True, ""
+        try:
+            prev_text = ""
+            async for data in self.chatbot.ask(
+                "Hi, respond 'Hello, world!' please.",
+            ):
+                message = data["message"][len(prev_text):]
+                prev_text = data["message"]
+            return True, ""
+        except Exception as e:
+            traceback.print_exc()
+            return False, str(e)
     
     async def query(self, req: request.Request) -> typing.Generator[response.Response, None, None]:
+        # convert messages to chatgpt format:
+        # [
+        #     {
+        #         "id": str(uuid.uuid4()),
+        #         "author": {"role": req.messages[i]['role']},
+        #         "content": {
+        #             "content_type": "text",
+        #             "parts": [
+        #                 req.messages[i]['content']
+        #             ]
+        #         }
+        #     }
+        # ]
+        
+        new_messages = []
+        for i in range(len(req.messages)):
+            new_messages.append({
+                "id": str(uuid.uuid4()),
+                "author": {"role": req.messages[i]['role']},
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        req.messages[i]['content']
+                    ]
+                }
+            })
+        new_messages
+        
+        random_int = random.randint(0, 1000000000)
+        
+        prev_text = ""
+        async for data in self.chatbot.post_messages(
+            messages=new_messages,
+        ):
+            message = data["message"][len(prev_text):]
+            prev_text = data["message"]
+            
+            yield response.Response(
+                id=random_int,
+                finish_reason=response.FinishReason.NULL,
+                normal_message=message,
+                function_call=None
+            )
+            random_int += 1
+            
         yield response.Response(
+            id=random_int,
             finish_reason=response.FinishReason.STOP,
             normal_message="",
             function_call=None

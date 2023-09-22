@@ -1,5 +1,7 @@
 import json
 
+import tiktoken
+
 from ..models.adapter import llm
 from ..models import adapter
 
@@ -49,3 +51,20 @@ class Channel:
             data["enabled"],
             data["latency"],
         )
+
+    def count_tokens(
+        self,
+        model: str,
+        messages: list[str],
+    ) -> int:
+        """Count message tokens."""
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+        except KeyError:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        num_tokens = 0
+        for message in messages:
+            for key, value in message.items():
+                num_tokens += len(encoding.encode(value))
+        num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
+        return num_tokens

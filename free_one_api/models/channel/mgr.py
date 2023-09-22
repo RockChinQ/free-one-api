@@ -1,7 +1,10 @@
 import abc
 
+import tiktoken
+
 from ...entities import channel
 from ..database import db
+from ...entities import request, response
 
 
 class AbsChannelManager(metaclass=abc.ABCMeta):
@@ -52,10 +55,17 @@ class AbsChannelManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    async def select_channel(self) -> channel.Channel:
+    async def select_channel(
+        self,
+        path: str,
+        req: request.Request,
+    ) -> channel.Channel:
         """Select a channel.
         
         Implement load balance algorithm here.
+        
+        Args:
+            path: path of this request.
+            req: request object.
         """
         pass
-    

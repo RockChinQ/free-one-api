@@ -35,6 +35,8 @@ class Response:
     
     Be created by LLM lib adapters. Pass between LLM lib adapters and protocol wrapper(http interface).
     """
+    id: str
+    """Set by upstream lib, used to identify this response."""
 
     finish_reason: FinishReason
     """The reason why this response responded."""
@@ -45,7 +47,12 @@ class Response:
     function_call: FunctionCall
     """Function call."""
 
-    def __init__(self, finish_reason: FinishReason, normal_message: str = None, function_call: FunctionCall = None):
+    def __init__(self, id: str, finish_reason: FinishReason, normal_message: str = None, function_call: FunctionCall = None):
+        self.id = id
         self.finish_reason = finish_reason
         self.normal_message = normal_message
         self.function_call = function_call
+    
+    def __str__(self) -> str:
+        return f"Response({self.id}, {self.finish_reason}, {self.normal_message}, {self.function_call})"    
+    

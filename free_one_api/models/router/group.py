@@ -45,6 +45,7 @@ class APIGroup(metaclass=abc.ABCMeta):
                 async def authenticated_handler(*args, **kwargs):
                     """Authenticated handler."""
                     auth = quart.request.headers.get("Authorization")
+
                     if auth is None:
                         return quart.jsonify({
                             "code": 1,
@@ -56,7 +57,7 @@ class APIGroup(metaclass=abc.ABCMeta):
                             "message": "Wrong authorization type."
                         })
                     token = auth[7:]
-                    if token not in self.tokens:
+                    if token not in self.get_tokens():
                         return quart.jsonify({
                             "code": 3,
                             "message": "Wrong token, please re-login."
@@ -81,3 +82,11 @@ class APIGroup(metaclass=abc.ABCMeta):
             list of APIs.
         """
         return self.routers
+    
+    def get_tokens(self) -> list[str]:
+        """Return set tokens for this group.
+        
+        For api auth only.
+        This can be overrided if impl class has its own token management.
+        """
+        return self.tokens

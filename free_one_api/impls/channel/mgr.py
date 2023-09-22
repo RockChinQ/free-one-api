@@ -1,8 +1,9 @@
 """Channel management."""
 import time
 import asyncio
+import random
 
-from ...entities import channel
+from ...entities import channel, request
 from ...models.database import db
 from ...models.channel import mgr
 
@@ -97,7 +98,9 @@ class ChannelManager(mgr.AbsChannelManager):
         now = time.time()
         latency = -1
         try:
-            await chan.adapter.test()
+            res, error = await chan.adapter.test()
+            if not res:
+                raise ValueError(error)
         except Exception as e:
             raise ValueError("Test failed.") from e
         latency = int((time.time() - now)*100)/100
@@ -106,9 +109,61 @@ class ChannelManager(mgr.AbsChannelManager):
         await self.update_channel(chan)
         return latency
 
-    async def select_channel(self) -> channel.Channel:
+    async def select_channel(
+        self,
+        path: str,
+        req: request.Request,
+    ) -> channel.Channel:
         """Select a channel.
         
-        Implement load balance algorithm here.
+        Method here will filter channels and select the best one.
+        
+        Hard filters, which channel not match these conditions will be excluded:
+        1. disabled channels.
+        2. path the client request.
+        3. model name the client request.
+        
+        Soft filters, these filter give score to each channel,
+        the channel with the highest score will be selected:
+        1. support for stream mode matching the client request.
+        2. support for multi-round matching the client request.
+        3. support for function calling.
+        4. usage times in lifetime.
+        
+        Args:
+            path: path of this request.
+            req: request object.
+            
         """
-        # TODO: implement load balance algorithm
+        stream_mode = req.stream
+        has_functions = req.functions is not None and len(req.functions) > 0
+        is_multi_round = req.messages is not None and len(req.messages) > 0
+        
+        model_name = req.model
+        
+        channel_copy = self.channels.copy()
+        
+        # delete disabled channels
+        channel_copy = list(filter(lambda chan: chan.enabled, channel_copy))
+        
+        # delete not matched path
+        channel_copy = list(filter(lambda chan: chan.adapter.supported_path() == path, channel_copy))
+        
+        # delete not matched model name
+        channel_copy_tmp = []
+        
+        for chan in channel_copy:
+            models = []
+            left_model_names = list(chan.model_mapping.keys())
+            models.extend(left_model_names)
+            models.extend(chan.adapter.supported_models())
+            
+            if model_name in models:
+                channel_copy_tmp.append(chan)
+                
+        channel_copy = channel_copy_tmp
+        
+        # i just randomly select one channel now!
+        random.seed(time.time())
+        return random.choice(channel_copy)
+        

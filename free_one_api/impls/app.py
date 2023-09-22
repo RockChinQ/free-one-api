@@ -94,20 +94,28 @@ async def make_application(config_path: str) -> Application:
     apikeymgr = keymgr.APIKeyManager(dbmgr)
     await apikeymgr.list_keys()
     
+    # make forward manager
+    from .forward import mgr as forwardmgr
+    
+    fwdmgr = forwardmgr.ForwardManager(channelmgr, apikeymgr)
+    
     # make router manager
     from .router import mgr as routermgr
     
     #   import all api groups
+    from .router import forward as forwardgroup
     from .router import api as apigroup
     from .router import web as webgroup
     
     # ========= API Groups =========
+    group_forward = forwardgroup.ForwardAPIGroup(dbmgr, channelmgr, apikeymgr, fwdmgr)
     group_api = apigroup.WebAPIGroup(dbmgr, channelmgr, apikeymgr)
     group_api.tokens = [crypto.md5_digest(config['router']['token'])]
     group_web = webgroup.WebPageGroup(config['web'], config['router'])
     
     paths = []
     
+    paths += group_forward.get_routers()
     paths += group_web.get_routers()
     paths += group_api.get_routers()
     

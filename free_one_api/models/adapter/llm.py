@@ -24,17 +24,22 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """Description of this adapter."""
         return self.__class__.__doc__
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def supported_models(self) -> list[str]:
         """Return models supported by this reverse lib."""
         return []
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def function_call_supported(self) -> bool:
         """True if this adapter supports function call."""
         return False
     
-    @abc.abstractproperty
+    @abc.abstractmethod
+    def stream_mode_supported(self) -> bool:
+        """True if this adapter supports stream mode."""
+        return False
+    
+    @abc.abstractmethod
     def multi_round_supported(self) -> bool:
         """True if this adapter supports multi round conversation."""
         return False
@@ -52,9 +57,9 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
     def supported_path(self) -> str:
         """Returns which path of OpenAI API should this adapter serve.
         
-        e.g. /v1/chat/completion
+        e.g. /v1/chat/completions
         """
-        return "/v1/chat/completion"
+        return "/v1/chat/completions"
 
     @abc.abstractmethod
     def __init__(self, config: dict):

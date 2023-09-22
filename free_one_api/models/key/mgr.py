@@ -11,6 +11,10 @@ class AbsAPIKeyManager(metaclass=abc.ABCMeta):
     keys: list[apikey.FreeOneAPIKey]
     """Key list in runtime."""
     
+    def get_key_list(self) -> list[apikey.FreeOneAPIKey]:
+        """Get key list."""
+        return self.keys
+    
     @abc.abstractmethod
     async def has_key(self, key_id: int) -> bool:
         """Check if a key exists."""

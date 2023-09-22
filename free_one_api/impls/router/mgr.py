@@ -17,13 +17,6 @@ class RouterManager:
         self.port = config["port"] if "port" in config else 3000
         self._app = quart.Quart(__name__)
 
-        # register all OpenAI API income paths
-        # from . import income
-        # @self._app.route("/v1/chat/compltion", methods=["POST"])
-        # async def chat_compltion():
-        #     return await income.chat_compltion()
-        # print(routes)
-
         for route, methods, handler, kwargs in routes:
             for method in methods:
                 self._app.route(route, methods=[method], **kwargs)(handler)
