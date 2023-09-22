@@ -46,23 +46,12 @@ class APIGroup(metaclass=abc.ABCMeta):
                     """Authenticated handler."""
                     auth = quart.request.headers.get("Authorization")
 
-                    if auth is None:
-                        return quart.jsonify({
-                            "code": 1,
-                            "message": "No authorization provided."
-                        })
-                    if not auth.startswith("Bearer "):
-                        return quart.jsonify({
-                            "code": 2,
-                            "message": "Wrong authorization type."
-                        })
-                    token = auth[7:]
-                    if token not in self.get_tokens():
-                        return quart.jsonify({
-                            "code": 3,
-                            "message": "Wrong token, please re-login."
-                        })
-                    return await handler(*args, **kwargs)
+                    check_res = self.check_auth(auth)
+                    
+                    if check_res is not None:
+                        return check_res
+                    else:
+                        return await handler(*args, **kwargs)
                 new_handler = authenticated_handler
                 new_handler.__name__ = handler.__name__
             
@@ -90,3 +79,30 @@ class APIGroup(metaclass=abc.ABCMeta):
         This can be overrided if impl class has its own token management.
         """
         return self.tokens
+    
+    def check_auth(self, auth: str) -> quart.Response:
+        """Check if auth is valid.
+        
+        Args:
+            auth: auth string.
+            
+        Returns:
+            Response if auth is invalid, None if auth is valid.
+        """
+        if auth is None:
+            return quart.jsonify({
+                "code": 1,
+                "message": "No authorization provided."
+            })
+        if not auth.startswith("Bearer "):
+            return quart.jsonify({
+                "code": 2,
+                "message": "Wrong authorization type."
+            })
+        token = auth[7:]
+        if token not in self.get_tokens():
+            return quart.jsonify({
+                "code": 3,
+                "message": "Wrong token, please re-login or check your token."
+            })
+        return None
