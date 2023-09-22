@@ -102,6 +102,17 @@ print(response)
 
 ## 快速体验
 
+### Demo
+
+可以登录并修改通道和key数据，每30分钟重置(xx:00/xx:30).
+
+地址：https://foa-demo.rockchin.top  
+密码：12345678  
+
+### 测试通道
+
+仅可使用通道，不可登录：
+
 api_base: https://foa.rockchin.top/v1  
 api_key: sk-foaumWEd2Jdfb9wrDSEqE5zEJo81XKd0v76yPsgsTWQgRPpe  
 model: gpt-3.5-turbo  

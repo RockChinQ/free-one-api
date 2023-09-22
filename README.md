@@ -102,6 +102,17 @@ print(response)
 
 ## Quick Test
 
+### Demo
+
+Allow to login and modify the channel/apikey settings.Reset every 30 minutes(xx:00/xx:30).
+
+Address: https://foa-demo.rockchin.top  
+Password: 12345678
+
+### Test channel
+
+Can only use the channel, can't login:
+
 api_base: https://foa.rockchin.top/v1  
 api_key: sk-foaumWEd2Jdfb9wrDSEqE5zEJo81XKd0v76yPsgsTWQgRPpe  
 model: gpt-3.5-turbo  
