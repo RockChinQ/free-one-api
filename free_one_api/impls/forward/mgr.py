@@ -129,6 +129,11 @@ class ForwardManager(forwardmgr.AbsForwardManager):
             req,
         )
         
+        # find model replacement
+        if len(chan.model_mapping.keys()) > 0:
+            if req.model in chan.model_mapping.keys():
+                req.model = chan.model_mapping[req.model]
+
         if chan is None:
             pass
         
