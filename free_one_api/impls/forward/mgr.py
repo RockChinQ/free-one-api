@@ -71,7 +71,12 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         req: request.Request,
     ) -> quart.Response:
         before = time.time()
-        id_suffix = "".join(random.choices(string.ascii_letters+string.digits, k=29))
+        
+        # id_suffix: channel id(3 chars) + adapter module name(max 10 chars) + random(16 chars)
+        id_suffix = ""
+        id_suffix += "{}".format(chan.id).zfill(3)
+        id_suffix += chan.adapter.__class__.__name__[:10]
+        id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
         
         normal_message = ""
         
