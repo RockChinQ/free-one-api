@@ -52,7 +52,7 @@ python main.py
 
 1. 创建一个 channel，按照说明填写配置，然后创建一个新的 key。
 
-<img width="752" alt="image" src="https://github.com/RockChinQ/free-one-api/assets/45992437/d163652b-0b71-4ca9-89fb-ac964692f0ee">
+![add_channel](assets/add_channel.png)
 
 2. 将 url (e.g. http://localhost:3000/v1 ) 设置为 OpenAI 的 api_base ，将生成的 key 设置为 OpenAI api key。
 3. 现在你可以使用 OpenAI API 来访问逆向工程的 LLM 库了。

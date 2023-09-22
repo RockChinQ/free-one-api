@@ -52,7 +52,7 @@ then you can open the admin page at `http://localhost:3000/`.
 
 1. Create channel on the admin page, create a new key.
 
-<img width="752" alt="image" src="https://github.com/RockChinQ/free-one-api/assets/45992437/d163652b-0b71-4ca9-89fb-ac964692f0ee">
+![add_channel](assets/add_channel.png)
 
 2. Set the url (e.g. http://localhost:3000/v1 ) as OpenAI endpoint, and set the generated key as OpenAI api key.  
 3. Then you can use the OpenAI API to access the reverse engineered LLM lib.
