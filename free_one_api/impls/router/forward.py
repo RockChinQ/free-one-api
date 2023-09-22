@@ -37,21 +37,33 @@ class ForwardAPIGroup(routergroup.APIGroup):
         @self.api("/v1/chat/completions", ["POST"], auth=True)
         async def chat_completion():
             """Chat completion."""
+            try:
             
-            raw_data = await quart.request.get_json()
-            
-            req = request.Request(
-                raw_data["model"],
-                raw_data["messages"],
-                raw_data["functions"] if "functions" in raw_data else None,
-                'stream' in raw_data and raw_data["stream"],
-            )
-            
-            return await self.fwdmgr.query(
-                "/v1/chat/completions",
-                req,
-                raw_data,
-            )
+                raw_data = await quart.request.get_json()
+                
+                req = request.Request(
+                    raw_data["model"],
+                    raw_data["messages"],
+                    raw_data["functions"] if "functions" in raw_data else None,
+                    'stream' in raw_data and raw_data["stream"],
+                )
+                
+                return await self.fwdmgr.query(
+                    "/v1/chat/completions",
+                    req,
+                    raw_data,
+                )
+            except Exception as e:
+                return quart.jsonify(
+                    {
+                        "error": {
+                            "message": "Error occurred while handling your request: {}. You can retry or contact your admin. See the documentation for details at https://github.com/RockChinQ/free-one-api".format(str(e)),
+                            "type": "requests",
+                            "param": None,
+                            "code": None
+                        }
+                    }
+                ), 500
         
     def get_tokens(self) -> list[str]:
         """Override to use keys in keymgr as tokens."""

@@ -90,21 +90,7 @@ Please refer to https://github.com/acheong08/ChatGPT
             traceback.print_exc()
             return False, str(e)
     
-    async def query(self, req: request.Request) -> typing.Generator[response.Response, None, None]:
-        # convert messages to chatgpt format:
-        # [
-        #     {
-        #         "id": str(uuid.uuid4()),
-        #         "author": {"role": req.messages[i]['role']},
-        #         "content": {
-        #             "content_type": "text",
-        #             "parts": [
-        #                 req.messages[i]['content']
-        #             ]
-        #         }
-        #     }
-        # ]
-        
+    async def query(self, req: request.Request) -> typing.Generator[response.Response, None, None]:        
         new_messages = []
         for i in range(len(req.messages)):
             new_messages.append({
