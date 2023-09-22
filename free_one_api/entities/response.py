@@ -5,7 +5,7 @@ import enum
 class FinishReason(enum.Enum):
     """Finish reason type enum."""
 
-    NULL = "null"
+    NULL = None
     """Null if this is a part of a streaming response."""
 
     FUNCTION_CALL = "function_call"
