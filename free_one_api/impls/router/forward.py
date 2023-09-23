@@ -1,3 +1,5 @@
+import traceback
+
 import quart
 
 from ...models.router import group as routergroup
@@ -5,7 +7,7 @@ from ...models.key import mgr as apikeymgr
 from ...models.channel import mgr as channelmgr
 from ...models.database import db
 from ...models.forward import mgr as forwardmgr
-from ...entities import channel, apikey, request, response
+from ...entities import channel, apikey, request, response, exceptions
 
 
 class ForwardAPIGroup(routergroup.APIGroup):
@@ -53,7 +55,19 @@ class ForwardAPIGroup(routergroup.APIGroup):
                     req,
                     raw_data,
                 )
+            except exceptions.QueryHandlingError as e:
+                return quart.jsonify(
+                    {
+                        "error": {
+                            "message": e.message,
+                            "type": e.type,
+                            "param": e.param,
+                            "code": e.code
+                        }
+                    }
+                ), e.status_code
             except Exception as e:
+                traceback.print_exc()
                 return quart.jsonify(
                     {
                         "error": {
