@@ -82,6 +82,8 @@ Method of getting cookie string, please refer to https://github.com/KoushikNavul
         conversation_id = self.chatbot.create_new_chat()['uuid']
         resp_text = self.chatbot.send_message(prompt, conversation_id)
         
+        self.chatbot.delete_conversation(conversation_id)
+        
         yield response.Response(
             id=random_int,
             finish_reason=response.FinishReason.STOP,
