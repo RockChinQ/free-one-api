@@ -21,9 +21,9 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         self,
         chan: channel.Channel,
         req: request.Request,
+        id_suffix: str,
     ) -> quart.Response:
         before = time.time()
-        id_suffix = "".join(random.choices(string.ascii_letters+string.digits, k=29))
         
         t = int(time.time())
         async def _gen():
@@ -79,14 +79,9 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         self,
         chan: channel.Channel,
         req: request.Request,
+        id_suffix: str,
     ) -> quart.Response:
         before = time.time()
-        
-        # id_suffix: channel id(3 chars) + adapter module name(max 10 chars) + random(16 chars)
-        id_suffix = ""
-        id_suffix += "{}".format(chan.id).zfill(3)
-        id_suffix += chan.adapter.__class__.__name__[:10]
-        id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
         
         normal_message = ""
         
@@ -165,7 +160,12 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         if chan is None:
             pass
         
+        id_suffix = ""
+        id_suffix += "{}".format(chan.id).zfill(3)
+        id_suffix += chan.adapter.__class__.__name__[:10]
+        id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
+        
         if req.stream:
-            return await self.__stream_query(chan, req)
+            return await self.__stream_query(chan, req, id_suffix)
         else:
-            return await self.__non_stream_query(chan, req)
+            return await self.__non_stream_query(chan, req, id_suffix)
