@@ -103,7 +103,6 @@ Please refer to https://github.com/acheong08/ChatGPT
                     ]
                 }
             })
-        new_messages
         
         random_int = random.randint(0, 1000000000)
         
