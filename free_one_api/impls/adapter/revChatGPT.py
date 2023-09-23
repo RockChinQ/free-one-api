@@ -8,7 +8,7 @@ import revChatGPT.V1 as chatgpt
 from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request
-from ...entities import response
+from ...entities import response, exceptions
 
 
 @adapter.llm_adapter
@@ -107,23 +107,35 @@ Please refer to https://github.com/acheong08/ChatGPT
         random_int = random.randint(0, 1000000000)
         
         prev_text = ""
-        async for data in self.chatbot.post_messages(
-            messages=new_messages,
-        ):
-            message = data["message"][len(prev_text):]
-            prev_text = data["message"]
-            
+        
+        try:
+        
+            async for data in self.chatbot.post_messages(
+                messages=new_messages,
+            ):
+                message = data["message"][len(prev_text):]
+                prev_text = data["message"]
+                
+                yield response.Response(
+                    id=random_int,
+                    finish_reason=response.FinishReason.NULL,
+                    normal_message=message,
+                    function_call=None
+                )
+                random_int += 1
+                
             yield response.Response(
                 id=random_int,
-                finish_reason=response.FinishReason.NULL,
-                normal_message=message,
+                finish_reason=response.FinishReason.STOP,
+                normal_message="",
                 function_call=None
             )
-            random_int += 1
+        except chatgpt.t.Error as e:
+            assert isinstance(e, chatgpt.t.ErrorType)
+            code = e.code.name.lower()
             
-        yield response.Response(
-            id=random_int,
-            finish_reason=response.FinishReason.STOP,
-            normal_message="",
-            function_call=None
-        )
+            raise exceptions.QueryHandlingError(
+                status_code=500,
+                code=code,
+                message=e.message,
+            )
