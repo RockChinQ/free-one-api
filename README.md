@@ -2,7 +2,7 @@
 
 # free-one-api
 
-[中文文档](README_cn.md) | [English](README.md)
+[中文文档](README.md) | [English](README_en.md)
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/RockChinQ/free-one-api)](https://github.com/RockChinQ/free-one-api/releases/latest)
 <a href="https://hub.docker.com/repository/docker/rockchin/free-one-api">
@@ -15,39 +15,39 @@
 </div>
 <hr>
 
-Turn reverse engineered LLM lib to standard OpenAI GPT API.  
-By using free-one-api, you can easily convert reverse engineered LLM libs (e.g. [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) ) to standard OpenAI GPT API.  
-So other application supports OpenAI GPT API can use reverse engineered LLM libs directly.
+将逆向工程的大语言模型库转换为标准的 OpenAI GPT API。  
+通过使用 free-one-api，您可以轻松地将逆向工程的 LLM 库（例如 [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) ） 转换为标准的 OpenAI GPT API。  
+因此，其他支持 OpenAI GPT API 的应用程序可以直接使用逆向工程的 LLM 库。
 
-## Features
+## 功能点
 
-- Automatically load balance.
-- Web UI.
-- Stream mode supported.
+- 支持自动负载均衡。
+- 支持 Web UI。
+- 支持流模式。
 
-### Supported LLM libs
+### 支持的 LLM 库
 
-- [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)
+- [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) - ChatGPT 网页版逆向工程
     - gpt-3.5-turbo
     - gpt-4
 
-### Supported API paths
+### 支持的 API 路径
 
 - `/v1/chat/completions`
 
-File a issue or pull request if you want to add more.
+欢迎提交 issue 或 pull request 来添加更多的 LLM 库和 API 路径支持。
 
-## Setup
+## 部署
 
-### Docker (Recommended)
+### Docker (推荐)
 
 ```bash
 docker run -d -p 3000:3000 --name free-one-api rockchin/free-one-api -v ./data:/app/data
 ```
 
-then you can open the admin page at `http://localhost:3000/`.
+你可以在 `http://localhost:3000/` 打开管理页面。
 
-### Manual
+### 手动
 
 ```bash
 git clone https://github.com/RockChinQ/free-one-api.git
@@ -59,16 +59,16 @@ pip install -r requirements.txt
 python main.py
 ```
 
-then you can open the admin page at `http://localhost:3000/`.
+你可以在 `http://localhost:3000/` 打开管理页面。
 
 ## Usage
 
-1. Create channel on the admin page, create a new key.
+1. 创建一个 channel，按照说明填写配置，然后创建一个新的 key。
 
 ![add_channel](assets/add_channel.png)
 
-2. Set the url (e.g. http://localhost:3000/v1 ) as OpenAI endpoint, and set the generated key as OpenAI api key.  
-3. Then you can use the OpenAI API to access the reverse engineered LLM lib.
+2. 将 url (e.g. http://localhost:3000/v1 ) 设置为 OpenAI 的 api_base ，将生成的 key 设置为 OpenAI api key。
+3. 现在你可以使用 OpenAI API 来访问逆向工程的 LLM 库了。
 
 ```curl
 # curl example
@@ -113,18 +113,18 @@ response = openai.ChatCompletion.create(
 print(response)
 ```
 
-## Quick Test
+## 快速体验
 
 ### Demo
 
-Allow to login and modify the channel/apikey settings.Reset every 30 minutes(xx:00/xx:30).
+可以登录并修改通道和key数据，每30分钟重置(xx:00/xx:30).
 
-Address: https://foa-demo.rockchin.top  
-Password: 12345678
+地址：https://foa-demo.rockchin.top  
+密码：12345678  
 
-### Test channel
+### 测试通道
 
-Can only use the channel, can't login:
+仅可使用通道，不可登录：
 
 api_base: https://foa.rockchin.top/v1  
 api_key: sk-foaumWEd2Jdfb9wrDSEqE5zEJo81XKd0v76yPsgsTWQgRPpe  
