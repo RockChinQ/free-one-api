@@ -3,7 +3,7 @@ import time
 import asyncio
 import random
 
-from ...entities import channel, request
+from ...entities import channel, request, exceptions
 from ...models.database import db
 from ...models.channel import mgr
 
@@ -163,7 +163,13 @@ class ChannelManager(mgr.AbsChannelManager):
                 
         channel_copy = channel_copy_tmp
         
+        if len(channel_copy) == 0:
+            raise exceptions.QueryHandlingError(
+                404,
+                "channel_not_found",
+                "No suitable channel found. You may need to contact your admin or check the documentation at https://github.com/RockChinQ/free-one-api",
+            )
+        
         # i just randomly select one channel now!
         random.seed(time.time())
         return random.choice(channel_copy)
-        
