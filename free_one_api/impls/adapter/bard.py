@@ -3,7 +3,7 @@ import traceback
 import uuid
 import random
 
-import claude_api as claude
+import bardapi as bard
 
 from free_one_api.entities import request, response
 
@@ -13,15 +13,15 @@ from ...entities import request, response, exceptions
 
 
 @adapter.llm_adapter
-class ClaudeAdapter(llm.LLMLibAdapter):
+class BardAdapter(llm.LLMLibAdapter):
     
     @classmethod
     def name(cls) -> str:
-        return "KoushikNavuluri/Claude-API"
+        return "dsdanielpark/Bard-API"
     
     @classmethod
     def description(self) -> str:
-        return "Use KoushikNavuluri/Claude-API to access Claude web edition."
+        return "Use dsdanielpark/Bard-API to access Claude web edition."
 
     def supported_models(self) -> list[str]:
         return [
@@ -42,33 +42,33 @@ class ClaudeAdapter(llm.LLMLibAdapter):
     def config_comment(cls) -> str:
         return \
 """Currently supports non stream mode only.
-You should provide cookie string as `cookie` in config:
+You should provide __Secure-1PSID as token extracted from cookies of Bard site.
+
 {
-    "cookie": "your cookie string"
+    "token": "bQhxxxxxxxxxxx"
 }
 
-Method of getting cookie string, please refer to https://github.com/KoushikNavuluri/Claude-API
+Method of getting __Secure-1PSID string, please refer to https://github.com/dsdanielpark/Bard-API
 """
 
     @classmethod
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
     
-    chatbot: claude.Client
+    chatbot: bard.Bard
     
     def __init__(self, config: dict):
         self.config = config
-        self.chatbot = claude.Client(self.config["cookie"])
+        self.chatbot = bard.Bard(token=config['token'])
         
     async def test(self) -> (bool, str):
         try:
-            conversation_id = self.chatbot.create_new_chat()['uuid']
-            response = self.chatbot.send_message("Hello, Claude!", conversation_id)
+            self.chatbot.get_answer("hello, please reply 'hi' only.")
             return True, ""
         except Exception as e:
             traceback.print_exc()
             return False, str(e)
-        
+
     async def query(self, req: request.Request) -> typing.AsyncGenerator[response.Response, None]:
         prompt = ""
         
@@ -79,10 +79,7 @@ Method of getting cookie string, please refer to https://github.com/KoushikNavul
         
         random_int = random.randint(0, 1000000000)
         
-        conversation_id = self.chatbot.create_new_chat()['uuid']
-        resp_text = self.chatbot.send_message(prompt, conversation_id)
-        
-        self.chatbot.delete_conversation(conversation_id)
+        resp_text = self.chatbot.get_answer(prompt)['content']
         
         yield response.Response(
             id=random_int,

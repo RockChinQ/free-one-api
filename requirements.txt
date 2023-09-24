@@ -4,3 +4,4 @@ PyYaml
 revChatGPT
 tiktoken
 claude-api
+bardapi
