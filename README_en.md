@@ -31,6 +31,7 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 |---|---|---|---|---|
 |[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|
+|[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|
 
 ### Supported API paths
 
