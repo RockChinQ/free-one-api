@@ -33,6 +33,7 @@
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|
 |[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|
 |[xtekky/gpt4free](https://github.com/xtekky/gpt4free)|✅|✅|❌|✅|
+|[Soulter/hugging-chat-api](https://github.com/Soulter/hugging-chat-api)|✅|✅|❌|✅|
 
 ### 支持的 API 路径
 
