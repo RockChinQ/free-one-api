@@ -7,3 +7,4 @@ claude-api
 bardapi
 hugchat
 g4f
+revTongYi

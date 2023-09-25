@@ -16,6 +16,7 @@ from .adapter import revChatGPT
 from .adapter import claude
 from .adapter import bard
 from .adapter import gpt4free
+from .adapter import hugchat
 
 
 class Application:
