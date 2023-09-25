@@ -32,6 +32,7 @@
 |[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|
 |[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|
+|[xtekky/gpt4free](https://github.com/xtekky/gpt4free)|✅|✅|❌|✅|
 
 ### 支持的 API 路径
 
