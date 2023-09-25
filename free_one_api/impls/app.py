@@ -15,6 +15,7 @@ from ..models.router import group as routergroup
 from .adapter import revChatGPT
 from .adapter import claude
 from .adapter import bard
+from .adapter import gpt4free
 
 
 class Application:

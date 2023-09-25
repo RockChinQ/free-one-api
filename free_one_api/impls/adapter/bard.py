@@ -21,7 +21,7 @@ class BardAdapter(llm.LLMLibAdapter):
     
     @classmethod
     def description(self) -> str:
-        return "Use dsdanielpark/Bard-API to access Claude web edition."
+        return "Use dsdanielpark/Bard-API to access Google Bard web edition."
 
     def supported_models(self) -> list[str]:
         return [
