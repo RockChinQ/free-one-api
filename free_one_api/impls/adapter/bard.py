@@ -55,11 +55,16 @@ Method of getting __Secure-1PSID string, please refer to https://github.com/dsda
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
     
-    chatbot: bard.Bard
+    _chatbot: bard.Bard = None
+    
+    @property
+    def chatbot(self) -> bard.Bard:
+        if self._chatbot == None:
+            self._chatbot = bard.Bard(token=self.config['token'])
+        return self._chatbot
     
     def __init__(self, config: dict):
         self.config = config
-        self.chatbot = bard.Bard(token=config['token'])
         
     async def test(self) -> (bool, str):
         try:
