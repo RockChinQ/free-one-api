@@ -89,7 +89,7 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         return False, "not implemented"
 
     @abc.abstractmethod
-    async def query(self, req: request.Request) -> typing.Generator[response.Response, None, None]:
+    async def query(self, req: request.Request) -> typing.AsyncGenerator[response.Response, None]:
         """Query reply from LLM lib.
         
         Always in streaming mode. If upstream lib doesn't support streaming, just yield one time.

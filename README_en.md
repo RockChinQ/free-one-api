@@ -27,9 +27,14 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 
 ### Supported LLM libs
 
-- [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)
-    - gpt-3.5-turbo
-    - gpt-4
+|Adapter|Multi Round|Stream|Function Call|Status|
+|---|---|---|---|---|
+|[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|ChatGPT Web Version|
+|[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|Claude Web Version|
+|[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|Google Bard Web Version|
+|[xtekky/gpt4free](https://github.com/xtekky/gpt4free)|✅|✅|❌|✅|gpt4free cracked multiple platforms|
+|[Soulter/hugging-chat-api](https://github.com/Soulter/hugging-chat-api)|✅|✅|❌|✅|hubbingface chat model|
+|[xw5xr6/revTongYi](https://github.com/xw5xr6/revTongYi)|✅|✅|❌|✅|Aliyun TongYi QianWen Web Version|
 
 ### Supported API paths
 
@@ -65,7 +70,7 @@ then you can open the admin page at `http://localhost:3000/`.
 
 1. Create channel on the admin page, create a new key.
 
-![add_channel](assets/add_channel.png)
+<img width="500" alt="image" src="assets/add_channel.png">
 
 2. Set the url (e.g. http://localhost:3000/v1 ) as OpenAI endpoint, and set the generated key as OpenAI api key.  
 3. Then you can use the OpenAI API to access the reverse engineered LLM lib.

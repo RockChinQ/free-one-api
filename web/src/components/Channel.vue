@@ -63,10 +63,11 @@ onresize = () => {
 
 const adapter_color = {
     "acheong08/ChatGPT": "#00BB00",
+    "KoushikNavuluri/Claude-API": "#dfd6c8",
+    "dsdanielpark/Bard-API": "#AACAFF",  // 168,199,250
     "xtekky/gpt4free": "#CC33FF",
     "acheong08/EdgeGPT": "#0388FF",
     "Soulter/hugging-chat-api": "#FFBB03",
-    "KoushikNavuluri/Claude-API": "#AAAAAA",
 }
 
 function deleteChannelConfirmed(channel_id) {
@@ -218,28 +219,7 @@ const showingChannelData = reactive({
         "latency": 0.13 // no need for creation
     }
 });
-const usableAdapterList = ref([
-    {
-        "name": "acheong08/ChatGPT",
-        "config_comment": "this is the comment"
-    },
-    {
-        "name": "xtekky/gpt4free",
-        "config_comment": "this is the comment"
-    },
-    {
-        "name": "KoushikNavuluri/Claude-API",
-        "config_comment": "this is the comment"
-    },
-    {
-        "name": "Soulter/hugging-chat-api",
-        "config_comment": "this is the comment"
-    },
-    {
-        "name": "acheong08/EdgeGPT",
-        "config_comment": "this is the comment"
-    }
-]);
+const usableAdapterList = ref([]);
 const usableAdapterMap = ref({
     "acheong08/ChatGPT": {
         "name": "acheong08/ChatGPT",

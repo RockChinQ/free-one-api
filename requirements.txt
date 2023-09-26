@@ -3,3 +3,8 @@ aiosqlite
 PyYaml
 revChatGPT
 tiktoken
+claude-api
+bardapi
+hugchat
+g4f
+revTongYi

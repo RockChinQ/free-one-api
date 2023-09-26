@@ -101,12 +101,12 @@ class ChannelManager(mgr.AbsChannelManager):
             res, error = await chan.adapter.test()
             if not res:
                 raise ValueError(error)
+            latency = int((time.time() - now)*100)/100
         except Exception as e:
             raise ValueError("Test failed.") from e
-        latency = int((time.time() - now)*100)/100
-        
-        chan.latency = latency
-        await self.update_channel(chan)
+        finally:
+            chan.latency = latency
+            await self.update_channel(chan)
         return latency
 
     async def select_channel(
