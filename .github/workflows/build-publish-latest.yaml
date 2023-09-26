@@ -6,7 +6,7 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  publish-docker-image:
+  publish-latest-docker-image:
     runs-on: ubuntu-latest
     name: Build and publish docker image
 

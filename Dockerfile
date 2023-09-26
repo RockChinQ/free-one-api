@@ -1,17 +1,15 @@
-FROM python:3.10.13-bullseye
+FROM python:3.10.13-slim-bullseye
 
 WORKDIR /app
 
 # copy dist of web
 COPY ./web/dist /app/web/dist
-
-COPY ./requirements.txt /app/requirements.txt
-COPY ./main.py /app/main.py
 COPY ./free_one_api /app/free_one_api
+COPY ./requirements.txt ./main.py /app/
 
-RUN pip install -r requirements.txt
-RUN pip uninstall torch tensorflow transformers -y
-RUN rm -rf /usr/local/lib/python3.10/site-packages/nvidia*
-RUN python main.py
+RUN pip install --no-cache -r requirements.txt \
+    && pip uninstall torch tensorflow transformers triton -y \
+    && rm -rf /usr/local/lib/python3.10/site-packages/nvidia* \
+    && python main.py
 
 CMD [ "python", "main.py" ]
