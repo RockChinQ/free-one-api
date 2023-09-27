@@ -1,5 +1,7 @@
 <div align="center">
 
+<img width="150" alt="image" src="web/src/assets/logo.png">
+
 # free-one-api
 
 [中文文档](README.md) | [English](README_en.md)
@@ -9,8 +11,6 @@
     <img src="https://img.shields.io/docker/pulls/rockchin/free-one-api?color=blue" alt="docker pull">
   </a>
 ![Wakapi Count](https://wakapi.dev/api/badge/RockChinQ/interval:any/project:free-one-api)
-
-<img width="500" alt="image" src="assets/feature.png">
 
 </div>
 <hr>
@@ -24,6 +24,24 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 - Automatically load balance.
 - Web UI.
 - Stream mode supported.
+- Multi lib supported.
+
+<details>
+<summary>Screenshots</summary>
+
+**Channel Page:**
+
+<img width="400" alt="image" src="assets/channels.png">
+
+**Add Channel:**
+
+<img width="400" alt="image" src="assets/add_channel.png">
+
+**Curl:**
+
+<img width="400" alt="image" src="assets/feature.png">
+
+</details>
 
 ### Supported LLM libs
 
@@ -70,7 +88,7 @@ then you can open the admin page at `http://localhost:3000/`.
 
 1. Create channel on the admin page, create a new key.
 
-<img width="500" alt="image" src="assets/add_channel.png">
+<img width="400" alt="image" src="assets/add_channel.png">
 
 2. Set the url (e.g. http://localhost:3000/v1 ) as OpenAI endpoint, and set the generated key as OpenAI api key.  
 3. Then you can use the OpenAI API to access the reverse engineered LLM lib.
