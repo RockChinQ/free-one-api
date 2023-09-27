@@ -1,23 +1,22 @@
+
+[中文](README.md) | [English](README_en.md)
+
 <div align="center">
 
 <img width="150" alt="image" src="web/src/assets/logo.png">
 
 # free-one-api
 
-[中文文档](README.md) | [English](README_en.md)
+通过标准的 OpenAI API 格式访问所有的 LLM 逆向工程库
 
+![Static Badge](https://img.shields.io/badge/Free-100%25-green)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/RockChinQ/free-one-api)](https://github.com/RockChinQ/free-one-api/releases/latest)
 <a href="https://hub.docker.com/repository/docker/rockchin/free-one-api">
-    <img src="https://img.shields.io/docker/pulls/rockchin/free-one-api?color=blue" alt="docker pull">
+    <img src="https://img.shields.io/docker/pulls/rockchin/free-one-api?color=green" alt="docker pull">
   </a>
 ![Wakapi Count](https://wakapi.dev/api/badge/RockChinQ/interval:any/project:free-one-api)
 
 </div>
-<hr>
-
-将逆向工程的大语言模型库转换为标准的 OpenAI GPT API。  
-通过使用 free-one-api，您可以轻松地将逆向工程的 LLM 库（例如 [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) ） 转换为标准的 OpenAI GPT API。  
-因此，其他支持 OpenAI GPT API 的应用程序可以直接使用逆向工程的 LLM 库。
 
 ## 功能点
 

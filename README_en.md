@@ -1,23 +1,22 @@
+
+[中文文档](README.md) | [English](README_en.md)
+
 <div align="center">
 
 <img width="150" alt="image" src="web/src/assets/logo.png">
 
 # free-one-api
 
-[中文文档](README.md) | [English](README_en.md)
+Access all reverse engineered LLM libs by standard OpenAI API format.
 
+![Static Badge](https://img.shields.io/badge/Free-100%25-green)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/RockChinQ/free-one-api)](https://github.com/RockChinQ/free-one-api/releases/latest)
 <a href="https://hub.docker.com/repository/docker/rockchin/free-one-api">
-    <img src="https://img.shields.io/docker/pulls/rockchin/free-one-api?color=blue" alt="docker pull">
+    <img src="https://img.shields.io/docker/pulls/rockchin/free-one-api?color=green" alt="docker pull">
   </a>
 ![Wakapi Count](https://wakapi.dev/api/badge/RockChinQ/interval:any/project:free-one-api)
 
 </div>
-<hr>
-
-Turn reverse engineered LLM lib to standard OpenAI GPT API.  
-By using free-one-api, you can easily convert reverse engineered LLM libs (e.g. [acheong08/ChatGPT](https://github.com/acheong08/ChatGPT) ) to standard OpenAI GPT API.  
-So other application supports OpenAI GPT API can use reverse engineered LLM libs directly.
 
 ## Features
 
