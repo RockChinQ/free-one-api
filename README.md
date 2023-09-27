@@ -24,6 +24,7 @@
 - 支持自动负载均衡。
 - 支持 Web UI。
 - 支持流模式。
+- 支持多个 LLM 逆向库。
 
 <details>
 <summary>截图展示</summary>

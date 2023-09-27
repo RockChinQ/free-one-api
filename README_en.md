@@ -24,6 +24,7 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 - Automatically load balance.
 - Web UI.
 - Stream mode supported.
+- Multi lib supported.
 
 <details>
 <summary>Screenshots</summary>
