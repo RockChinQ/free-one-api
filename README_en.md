@@ -25,6 +25,23 @@ So other application supports OpenAI GPT API can use reverse engineered LLM libs
 - Web UI.
 - Stream mode supported.
 
+<details>
+<summary>Screenshots/summary>
+
+**Channel Page:**
+
+<img width="400" alt="image" src="assets/channels.png">
+
+**Add Channel:**
+
+<img width="400" alt="image" src="assets/add_channel.png">
+
+**Curl:**
+
+<img width="400" alt="image" src="assets/feature.png">
+
+</details>
+
 ### Supported LLM libs
 
 |Adapter|Multi Round|Stream|Function Call|Status|
@@ -70,7 +87,7 @@ then you can open the admin page at `http://localhost:3000/`.
 
 1. Create channel on the admin page, create a new key.
 
-<img width="500" alt="image" src="assets/add_channel.png">
+<img width="400" alt="image" src="assets/add_channel.png">
 
 2. Set the url (e.g. http://localhost:3000/v1 ) as OpenAI endpoint, and set the generated key as OpenAI api key.  
 3. Then you can use the OpenAI API to access the reverse engineered LLM lib.
