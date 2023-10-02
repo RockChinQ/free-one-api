@@ -64,7 +64,7 @@
 ### Docker (推荐)
 
 ```bash
-docker run -d -p 3000:3000 --name free-one-api rockchin/free-one-api -v ./data:/app/data
+docker run -d -p 3000:3000 --name free-one-api -v ./data:/app/data rockchin/free-one-api
 ```
 
 你可以在 `http://localhost:3000/` 打开管理页面。

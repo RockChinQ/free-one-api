@@ -64,7 +64,7 @@ File a issue or pull request if you want to add more.
 ### Docker (Recommended)
 
 ```bash
-docker run -d -p 3000:3000 --name free-one-api rockchin/free-one-api -v ./data:/app/data
+docker run -d -p 3000:3000 --name free-one-api -v ./data:/app/data rockchin/free-one-api
 ```
 
 then you can open the admin page at `http://localhost:3000/`.
