@@ -56,6 +56,12 @@ default_config = {
         "type": "sqlite",
         "path": "free_one_api.db",
     },
+    "channel": {
+        "heartbeat": {
+            "interval": 1800,
+            "fail_limit": 3,
+        },
+    },
     "router": {
         "port": 3000,
         "token": "12345678",
@@ -71,8 +77,8 @@ async def make_application(config_path: str) -> Application:
         with open(config_path, "w") as f:
             yaml.dump(default_config, f)
             print("Config file created at", config_path)
-            print("Please edit it and run again.")
-            sys.exit(0)
+            # print("Please edit it and run again.")
+            # sys.exit(0)
     config = {}
     with open(config_path, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
