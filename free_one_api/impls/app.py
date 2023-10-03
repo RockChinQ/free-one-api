@@ -54,7 +54,7 @@ class Application:
 default_config = {
     "database": {
         "type": "sqlite",
-        "path": "free_one_api.db",
+        "path": "./data/free_one_api.db",
     },
     "channel": {
         "heartbeat": {
@@ -67,7 +67,7 @@ default_config = {
         "token": "12345678",
     },
     "web": {
-        "frontend_path": "../web/dist/",
+        "frontend_path": "./web/dist/",
     }
 }
 
