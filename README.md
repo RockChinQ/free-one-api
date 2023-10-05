@@ -83,7 +83,7 @@ python main.py
 
 你可以在 `http://localhost:3000/` 打开管理页面。
 
-## Usage
+## 用法
 
 1. 创建一个 channel，按照说明填写配置，然后创建一个新的 key。
 
@@ -133,6 +133,33 @@ response = openai.ChatCompletion.create(
 )
 
 print(response)
+```
+
+### 配置文件
+
+配置文件位于`data/config.yaml`
+
+```yaml
+database:
+  # SQLite 数据库文件路径
+  path: ./data/free_one_api.db
+  type: sqlite
+router:
+  # 后端监听端口
+  port: 3000
+  # 管理页登录密码
+  token: '12345678'
+watchdog:
+  heartbeat:
+    # 自动停用渠道前的心跳失败次数
+    fail_limit: 3
+    # 心跳检测间隔（秒）
+    interval: 1800
+    # 单个渠道心跳检测超时时间（秒）
+    timeout: 300
+web:
+  # 前端页面路径
+  frontend_path: ./web/dist/
 ```
 
 ## 快速体验
