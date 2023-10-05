@@ -18,7 +18,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 
 </div>
 
-> If you want to access the official API of each LLM through the OpenAI standard API, you can use [songquanpeng/one-api](https://github.com/songquanpeng/one-api), `free-one-api` can also be used with the `one-api` project.
+> If you want to access the **official API(paid)** of each LLM through the OpenAI standard API, you can use [songquanpeng/one-api](https://github.com/songquanpeng/one-api), `free-one-api` can also be used with the `one-api` project.
 
 ## Features
 
@@ -26,6 +26,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 - Web UI.
 - Stream mode supported.
 - Multi lib supported.
+- Heartbeat check, auto disable unavailable channel.
 
 <details>
 <summary>Screenshots</summary>

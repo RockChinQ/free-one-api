@@ -18,7 +18,7 @@
 
 </div>
 
-> 欲通过 OpenAI 标准 API 访问各个 LLM 的官方接口，可以使用 [songquanpeng/one-api](https://github.com/songquanpeng/one-api)，`free-one-api` 亦可与 `one-api` 项目搭配使用。
+> 欲通过 OpenAI 标准 API 访问各个 LLM 的**官方接口(付费)**，可以使用 [songquanpeng/one-api](https://github.com/songquanpeng/one-api)，`free-one-api` 亦可与 `one-api` 项目搭配使用。
 
 ## 功能点
 
@@ -26,6 +26,7 @@
 - 支持 Web UI。
 - 支持流模式。
 - 支持多个 LLM 逆向库。
+- 心跳检测机制、自动禁用不可用的渠道。
 
 <details>
 <summary>截图展示</summary>
