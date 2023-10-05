@@ -48,7 +48,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 ### Supported LLM libs
 
 |Adapter|Multi Round|Stream|Function Call|Status|
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 |[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|ChatGPT Web Version|
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|Claude Web Version|
 |[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|Google Bard Web Version|
