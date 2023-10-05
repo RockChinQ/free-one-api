@@ -56,7 +56,7 @@ default_config = {
         "type": "sqlite",
         "path": "./data/free_one_api.db",
     },
-    "channel": {
+    "watchdog": {
         "heartbeat": {
             "interval": 1800,
             "fail_limit": 3,
