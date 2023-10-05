@@ -21,9 +21,9 @@ class RouterManager:
             for method in methods:
                 self._app.route(route, methods=[method], **kwargs)(handler)
 
-    def serve(self):
+    async def serve(self, loop):
         """Serve API."""
-        self._app.run(host="0.0.0.0", port=self.port)
+        return await self._app.run_task(host="0.0.0.0", port=self.port)
 
 
 if __name__ == "__main__":

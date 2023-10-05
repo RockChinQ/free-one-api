@@ -135,6 +135,33 @@ response = openai.ChatCompletion.create(
 print(response)
 ```
 
+### Configurations
+
+Configuration file is saved at `data/config.yaml`
+
+```yaml
+database:
+  # SQLite DB file path
+  path: ./data/free_one_api.db
+  type: sqlite
+router:
+  # Backend listen port
+  port: 3000
+  # Admin page login password
+  token: '12345678'
+watchdog:
+  heartbeat:
+    # Max fail times
+    fail_limit: 3
+    # Heartbeat check interval (seconds)
+    interval: 1800
+    # Single channel heartbeat check timeout (seconds)
+    timeout: 300
+web:
+  # Frontend page path
+  frontend_path: ./web/dist/
+```
+
 ## Quick Test
 
 ### Demo
