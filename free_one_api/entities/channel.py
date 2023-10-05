@@ -1,4 +1,6 @@
+import asyncio
 import json
+import time
 
 import tiktoken
 
@@ -21,6 +23,9 @@ class Channel:
     enabled: bool
 
     latency: int
+    
+    fail_count: int
+    """Amount of sequential failures. Only in memory."""
 
     def __init__(self, id: int, name: str, adapter: llm.LLMLibAdapter, model_mapping: dict, enabled: bool, latency: int):
         self.id = id
@@ -29,6 +34,7 @@ class Channel:
         self.model_mapping = model_mapping
         self.enabled = enabled
         self.latency = latency
+        self.fail_count = 0
 
     @classmethod
     def dump_channel(cls, chan: 'Channel') -> dict:
@@ -68,3 +74,21 @@ class Channel:
                 num_tokens += len(encoding.encode(value))
         num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
         return num_tokens
+    
+    async def heartbeat(self, timeout: int=300) -> int:
+        """Call adapter test, returns fail count."""
+        
+        try:
+            start = time.time()
+            succ = await asyncio.wait_for(self.adapter.test(), timeout=timeout)
+            if succ:
+                latency = int((time.time() - start)*100)/100
+                self.fail_count = 0
+                self.latency = latency
+                return 0
+            else:
+                self.fail_count += 1
+                return self.fail_count
+        finally:
+            self.fail_count += 1
+            return self.fail_count

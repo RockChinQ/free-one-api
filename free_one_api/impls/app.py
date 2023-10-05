@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 
 import yaml
 
@@ -11,6 +12,7 @@ from ..models.database import db
 from ..models.channel import mgr as chanmgr
 from ..models.key import mgr as keymgr
 from ..models.router import group as routergroup
+from ..models.watchdog import wd as wdmgr
 
 from .adapter import revChatGPT
 from .adapter import claude
@@ -35,21 +37,29 @@ class Application:
     key: keymgr.AbsAPIKeyManager
     """API Key manager."""
     
+    watchdog: wdmgr.AbsWatchDog
+    
     def __init__(
         self,
         dbmgr: db.DatabaseInterface,
         router: routermgr.RouterManager,
         channel: chanmgr.AbsChannelManager,
         key: keymgr.AbsAPIKeyManager,
+        watchdog: wdmgr.AbsWatchDog,
     ):
         self.dbmgr = dbmgr
         self.router = router
         self.channel = channel
         self.key = key
+        self.watchdog = watchdog
         
-    def run(self):
+    async def run(self):
         """Run application."""
-        return self.router.serve()
+        loop = asyncio.get_running_loop()
+        
+        loop.create_task(self.watchdog.run())
+        
+        await self.router.serve(loop)
 
 default_config = {
     "database": {
@@ -59,6 +69,7 @@ default_config = {
     "watchdog": {
         "heartbeat": {
             "interval": 1800,
+            "timeout": 300,
             "fail_limit": 3,
         },
     },
@@ -137,11 +148,27 @@ async def make_application(config_path: str) -> Application:
         config=config['router'],
     )
     
+    # watchdog and tasks
+    from .watchdog import wd as watchdog
+    
+    wdmgr = watchdog.WatchDog()
+    
+    # tasks
+    from .watchdog.tasks import heartbeat
+    
+    hbtask = heartbeat.HeartBeatTask(
+        channelmgr,
+        config['watchdog']['heartbeat'],
+    )
+    
+    wdmgr.add_task(hbtask)
+    
     app = Application(
         dbmgr=dbmgr,
         router=routermgr,
         channel=channelmgr,
         key=apikeymgr,
+        watchdog=wdmgr,
     )
     
     return app

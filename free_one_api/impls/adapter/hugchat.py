@@ -65,10 +65,10 @@ Please refer to https://github.com/Soulter/hugging-chat-api
             sign = login.Login(self.config['email'], self.config['passwd'])
             cookie: requests.sessions.RequestsCookieJar = None
             try:
-                cookie = sign.loadCookiesFromDir("hugchatCookies")
+                cookie = sign.loadCookiesFromDir("data/hugchatCookies")
             except:
                 cookie = sign.login()
-                sign.saveCookiesToDir("hugchatCookies")
+                sign.saveCookiesToDir("data/hugchatCookies")
             
             self._chatbot = hugchat.ChatBot(cookies=cookie.get_dict())
         return self._chatbot
