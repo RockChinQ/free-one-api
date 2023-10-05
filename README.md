@@ -18,6 +18,8 @@
 
 </div>
 
+> 欲通过 OpenAI 标准 API 访问各个 LLM 的官方接口，可以使用 [songquanpeng/one-api](https://github.com/songquanpeng/one-api)，`free-one-api` 亦可与 `one-api` 项目搭配使用。
+
 ## 功能点
 
 - 支持自动负载均衡。
