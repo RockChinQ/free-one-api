@@ -1,6 +1,7 @@
 import asyncio
 import traceback
 import logging
+import random
 
 from ....models.watchdog import task
 from ....models.channel import mgr as chanmgr
@@ -29,6 +30,9 @@ class HeartBeatTask(task.AbsTask):
         for chan in self.channel.channels:
             if chan.enabled:
                 async def process(ch: channel.Channel):
+                    random_delay = random.randint(0, 10)
+                    await asyncio.sleep(random_delay)
+                    
                     fail_count = await ch.heartbeat(timeout=self.cfg["timeout"])
                     if fail_count > self.cfg["fail_limit"]:
                         try:
