@@ -111,7 +111,7 @@ Please refer to https://github.com/xtekky/gpt4free
         for provider in providers:
 
             # print("Testing provider", provider)
-            logging.info("Testing provider %s", provider)
+            # logging.info("Testing provider %s", provider)
 
             if provider in exclude:
                 continue
