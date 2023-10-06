@@ -32,7 +32,7 @@ Mock.mock("/check_password", "post", {
     "message": "ok",
 })
 
-Mock.mock(/\/log\/list.*/, "get", {
+Mock.mock(/\/api\/log\/list.*/, "get", {
     "code": 0,
     "message": "ok",
     "data": {

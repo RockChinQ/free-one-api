@@ -13,9 +13,10 @@ const page_count = ref(0);
 const keyContainerWidth = ref("1000px");
 
 function refreshLogs(){
-    axios.get("/log/list", {
+    console.log("refreshing logs")
+    axios.get("/api/log/list", {
         params: {
-            capacity: 20,
+            capacity: 10,
             page: page.value
         }
     }).then((response) => {
@@ -23,7 +24,14 @@ function refreshLogs(){
 
         if (response.data.code === 0){
             page_count.value = response.data.data.page_count;
-            logs.value = response.data.data.logs;
+
+            var logs_raw = response.data.data.logs;
+
+            // 把所有timestamp转换成可读的格式
+            for (let i = 0; i < logs_raw.length; i++){
+                logs_raw[i].time = new Date(logs_raw[i].timestamp * 1000).toLocaleString();
+            }
+            logs.value = logs_raw;
         }else{
             ElNotification({
                 message: "Failed: "+res.data.message,
@@ -67,6 +75,7 @@ onresize = () => {
         <el-pagination id="pages" layout="prev, pager, next" :page-count="page_count" @current-change="changePage" />
         <el-table id="log_table" :data="logs" stripe >
             <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="time" label="Time" width="180" />
             <el-table-column prop="content" label="Content" />
         </el-table>
     </div>

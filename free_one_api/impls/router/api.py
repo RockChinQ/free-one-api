@@ -268,6 +268,7 @@ class WebAPIGroup(routergroup.APIGroup):
                 page = int(data.get("page", 0))
                 
                 amount = await self.dbmgr.get_logs_amount()
+                page_count = (amount + capacity - 1) // capacity
                 
                 logs = await self.dbmgr.select_logs_page(capacity, page)
                 
@@ -275,7 +276,7 @@ class WebAPIGroup(routergroup.APIGroup):
                     "code": 0,
                     "message": "ok",
                     "data": {
-                        "amount": amount,
+                        "page_count": page_count,
                         "logs": [
                             {
                                 "id": log[0],
