@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS apikey (
 )
 """
 
+log_table_sql = """
+CREATE TABLE IF NOT EXISTS log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    content TEXT NOT NULL
+)
+"""
+
 
 class SQLiteDB(dbmod.DatabaseInterface):
 
@@ -38,8 +46,9 @@ class SQLiteDB(dbmod.DatabaseInterface):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(channel_table_sql)
             await db.execute(key_table_sql)
+            await db.execute(log_table_sql)
             await db.commit()
-            
+
     async def get_channel(self, channel_id: int) -> channel.Channel:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute("SELECT * FROM channel WHERE id = ?", (channel_id,)) as cursor:
@@ -134,3 +143,30 @@ class SQLiteDB(dbmod.DatabaseInterface):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("DELETE FROM apikey WHERE id = ?", (key_id,))
             await db.commit()
+
+    async def insert_log(self, timestamp: int, content: str) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("INSERT INTO log (timestamp, content) VALUES (?, ?)", (
+                timestamp,
+                content,
+            ))
+            await db.commit()
+
+    async def select_logs(self, time_range: tuple[int, int]) -> list[tuple[int, int, str]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT * FROM log WHERE timestamp >= ? AND timestamp <= ?", time_range) as cursor:
+                rows = await cursor.fetchall()
+                return [(row[0], row[1], row[2]) for row in rows]
+
+    async def select_logs_page(self, capacity: int, page: int) -> list[tuple[int, int, str]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT * FROM log ORDER BY id DESC LIMIT ? OFFSET ?", (capacity, capacity * page)) as cursor:
+                rows = await cursor.fetchall()
+                return [(row[0], row[1], row[2]) for row in rows]
+    
+    async def get_logs_amount(self) -> int:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT COUNT(*) FROM log") as cursor:
+                row = await cursor.fetchone()
+                return row[0]
+    

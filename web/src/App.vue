@@ -2,6 +2,7 @@
 import Home from './components/Home.vue';
 import Channel from './components/Channel.vue';
 import APIKey from './components/APIKey.vue';
+import Log from './components/Log.vue';
 import { setPassword, getPassword, clearPassword, checkPassword } from './common/account';
 
 import { ElMessageBox, ElMessage } from 'element-plus';
@@ -54,6 +55,7 @@ function logout(){
         <div class="tab_btn flex_container" @click="switchTab('home')">Home</div>
         <div class="tab_btn flex_container" @click="switchTab('channel')">Channels</div>
         <div class="tab_btn flex_container" @click="switchTab('apikey')">API Keys</div>
+        <div class="tab_btn flex_container" @click="switchTab('logs')">Logs</div>
         <div id="login_info">
             <el-button :type="getPassword()==''?'success':'danger'"
             @click="getPassword()==''?showLoginDialog():logout()"
@@ -67,6 +69,7 @@ function logout(){
         <Home v-if="currentTab === 'home'"></Home>
         <Channel v-if="currentTab === 'channel'"></Channel>
         <APIKey v-if="currentTab === 'apikey'"></APIKey>
+        <Log v-if="currentTab === 'logs'"></Log>
     </div>
 </template>
 

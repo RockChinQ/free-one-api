@@ -1,6 +1,8 @@
 import os
 import sys
 import asyncio
+import logging
+import colorlog
 
 import yaml
 
@@ -20,6 +22,8 @@ from .adapter import bard
 from .adapter import gpt4free
 from .adapter import hugchat
 from .adapter import qianwen
+
+from . import log
 
 
 class Application:
@@ -61,6 +65,14 @@ class Application:
         
         await self.router.serve(loop)
 
+log_colors_config = {
+    'DEBUG': 'green',  # cyan white
+    'INFO': 'white',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'cyan',
+}
+
 default_config = {
     "database": {
         "type": "sqlite",
@@ -79,6 +91,9 @@ default_config = {
     },
     "web": {
         "frontend_path": "./web/dist/",
+    },
+    "logging": {
+        "debug": False,
     }
 }
 
@@ -93,7 +108,31 @@ async def make_application(config_path: str) -> Application:
     config = {}
     with open(config_path, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
+
+    # logging
+    logging_level = logging.INFO
+    
+    if 'logging' in config and 'debug' in config['logging'] and config['logging']['debug']:
+        logging_level = logging.DEBUG
         
+    if 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true':
+        logging_level = logging.DEBUG
+        
+    terminal_out = logging.StreamHandler()
+    
+    terminal_out.setLevel(logging_level)
+    terminal_out.setFormatter(colorlog.ColoredFormatter(
+        "[%(asctime)s.%(msecs)03d] %(log_color)s%(filename)s (%(lineno)d) - [%(levelname)s] : "
+            "%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors=log_colors_config,
+    ))
+    
+    for handler in logging.getLogger().handlers:
+        logging.getLogger().removeHandler(handler)
+    
+    logging.getLogger().addHandler(terminal_out)    
+
     # make database manager
     from .database import sqlite as sqlitedb
     
@@ -103,6 +142,14 @@ async def make_application(config_path: str) -> Application:
     
     dbmgr = dbmgr_cls_mapping[config['database']['type']](config['database'])
     await dbmgr.initialize()
+    
+    # database handler
+    dblogger = log.SQLiteHandler(dbmgr)
+    
+    dblogger.setLevel(logging_level)
+    dblogger.setFormatter(logging.Formatter("[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s"))
+    
+    logging.getLogger().addHandler(dblogger)
     
     # make channel manager
     from .channel import mgr as chanmgr
@@ -170,6 +217,8 @@ async def make_application(config_path: str) -> Application:
         key=apikeymgr,
         watchdog=wdmgr,
     )
+    
+    logging.info("Application initialized.")
     
     return app
     

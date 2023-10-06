@@ -2,6 +2,7 @@ import time
 import json
 import string
 import random
+import logging
 
 import quart
 
@@ -164,6 +165,10 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         id_suffix += "{}".format(chan.id).zfill(3)
         id_suffix += chan.adapter.__class__.__name__[:10]
         id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
+        
+        query_info_str = f"type=query, path={path}, model={req.model}, id_suffix={id_suffix}, channel_name={chan.name}, channel_adpater={chan.adapter.__class__.__name__}"
+        
+        logging.info(query_info_str)
         
         if req.stream:
             return await self.__stream_query(chan, req, id_suffix)
