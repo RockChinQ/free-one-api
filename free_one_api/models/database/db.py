@@ -50,3 +50,17 @@ class DatabaseInterface(metaclass=abc.ABCMeta):
     async def delete_key(self, key_id: int) -> None:
         """Delete a key."""
         return
+
+    @abc.abstractmethod
+    async def insert_log(self, timestamp: int, content: str) -> None:
+        """Insert a log."""
+        return
+
+    @abc.abstractmethod
+    async def select_logs(self, time_range: tuple[int, int]) -> list[tuple[int, str]]:
+        """Select logs.
+        
+        Args:
+            time_range: (start, end)
+        """
+        return
