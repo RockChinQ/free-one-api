@@ -148,6 +148,18 @@ database:
   # SQLite DB file path
   path: ./data/free_one_api.db
   type: sqlite
+logging:
+  debug: false  # Enable debug log
+# Random advertisement, will be appended to the end of each response
+random_ad:
+  # advertisement list
+  ad_list:
+  - ' (This response is sponsored by Free One API. Consider star the project on GitHub:
+    https://github.com/RockChinQ/free-one-api )'
+  # Enable random ad
+  enabled: false
+  # Random ad rate
+  rate: 0.05
 router:
   # Backend listen port
   port: 3000

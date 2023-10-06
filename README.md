@@ -148,6 +148,19 @@ database:
   # SQLite 数据库文件路径
   path: ./data/free_one_api.db
   type: sqlite
+logging:
+  debug: false  # 是否开启调试日志
+# 随机广告
+# 会随机追加到每个响应的末尾
+random_ad:
+  # 广告列表
+  ad_list:
+  - ' (This response is sponsored by Free One API. Consider star the project on GitHub:
+    https://github.com/RockChinQ/free-one-api )'
+  # 是否开启随机广告
+  enabled: false
+  # 广告出现概率 (0-1)
+  rate: 0.05
 router:
   # 后端监听端口
   port: 3000
