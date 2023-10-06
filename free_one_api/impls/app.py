@@ -99,7 +99,7 @@ default_config = {
         "enabled": False,
         "rate": 0.05,
         "ad_list": [
-            "This response is sponsored by Free One API. Consider star the project on GitHub: https://github.com/RockChinQ/free-one-api",
+            " (This response is sponsored by Free One API. Consider star the project on GitHub: https://github.com/RockChinQ/free-one-api )",
         ]
     }
 }
