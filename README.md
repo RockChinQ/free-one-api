@@ -179,5 +179,5 @@ web:
 仅可使用通道，不可登录：
 
 api_base: https://foa.rockchin.top/v1  
-api_key: sk-foaumWEd2Jdfb9wrDSEqE5zEJo81XKd0v76yPsgsTWQgRPpe  
+api_key: sk-foaDfZxzvfrwfqkBDJEMq7C0rdXkhOjXx4aM23pH42tv8SJ4  
 model: gpt-3.5-turbo  
