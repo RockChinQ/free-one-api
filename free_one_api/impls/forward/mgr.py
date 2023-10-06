@@ -166,7 +166,11 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         id_suffix += chan.adapter.__class__.__name__[:10]
         id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
         
-        query_info_str = f"type=query, path={path}, model={req.model}, id_suffix={id_suffix}, channel_name={chan.name}, channel_adpater={chan.adapter.__class__.__name__}"
+        auth = quart.request.headers.get("Authorization")
+        if auth.startswith("Bearer "):
+            auth = auth[7:]
+        
+        query_info_str = f"type=query, path={path}, model={req.model}, id_suffix={id_suffix}, channel_name={chan.name}, channel_adpater={chan.adapter.__class__.__name__}, key={auth}"
         
         logging.info(query_info_str)
         
