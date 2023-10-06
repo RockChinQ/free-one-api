@@ -80,7 +80,7 @@ class Channel:
         
         try:
             start = time.time()
-            succ = await asyncio.wait_for(self.adapter.test(), timeout=timeout)
+            succ, err = await asyncio.wait_for(self.adapter.test(), timeout=timeout)
             if succ:
                 latency = int((time.time() - start)*100)/100
                 self.fail_count = 0
