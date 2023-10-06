@@ -27,6 +27,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 - Stream mode supported.
 - Multi lib supported.
 - Heartbeat check, auto disable unavailable channel.
+- Log record.
 
 <details>
 <summary>Screenshots</summary>
