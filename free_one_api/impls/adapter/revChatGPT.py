@@ -80,11 +80,16 @@ Please refer to https://github.com/acheong08/ChatGPT
     async def test(self) -> (bool, str):
         try:
             prev_text = ""
+            conversation_id = ""
+            self.chatbot.conversation_id = None
             async for data in self.chatbot.ask(
                 "Hi, respond 'Hello, world!' please.",
             ):
                 message = data["message"][len(prev_text):]
                 prev_text = data["message"]
+                conversation_id = data["conversation_id"]
+                
+            await self.chatbot.delete_conversation(conversation_id)
             return True, ""
         except Exception as e:
             traceback.print_exc()
@@ -109,12 +114,14 @@ Please refer to https://github.com/acheong08/ChatGPT
         prev_text = ""
         
         try:
-        
+            conversation_id = ""
+            self.chatbot.conversation_id = None
             async for data in self.chatbot.post_messages(
                 messages=new_messages,
             ):
                 message = data["message"][len(prev_text):]
                 prev_text = data["message"]
+                conversation_id = data["conversation_id"]
                 
                 yield response.Response(
                     id=random_int,
@@ -130,6 +137,8 @@ Please refer to https://github.com/acheong08/ChatGPT
                 normal_message="",
                 function_call=None
             )
+            
+            await self.chatbot.delete_conversation(conversation_id)
         except chatgpt.t.Error as e:
             assert isinstance(e, chatgpt.t.ErrorType)
             code = e.code.name.lower()
