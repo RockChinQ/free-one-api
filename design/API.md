@@ -18,6 +18,9 @@
         - GET /raw/<id:int>
         - POST /create
         - DEL /revoke/<id:int>
+    - /log
+        - GET /list
+            - page:int capacity:int
 
 ## Entities
 

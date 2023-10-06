@@ -152,8 +152,21 @@ class SQLiteDB(dbmod.DatabaseInterface):
             ))
             await db.commit()
 
-    async def select_logs(self, time_range: tuple[int, int]) -> list[tuple[int, str]]:
+    async def select_logs(self, time_range: tuple[int, int]) -> list[tuple[int, int, str]]:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute("SELECT * FROM log WHERE timestamp >= ? AND timestamp <= ?", time_range) as cursor:
                 rows = await cursor.fetchall()
-                return [(row[1], row[2]) for row in rows]
+                return [(row[0], row[1], row[2]) for row in rows]
+
+    async def select_logs_page(self, capacity: int, page: int) -> list[tuple[int, int, str]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT * FROM log ORDER BY id DESC LIMIT ? OFFSET ?", (capacity, capacity * page)) as cursor:
+                rows = await cursor.fetchall()
+                return [(row[0], row[1], row[2]) for row in rows]
+    
+    async def get_logs_amount(self) -> int:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT COUNT(*) FROM log") as cursor:
+                row = await cursor.fetchone()
+                return row[0]
+    

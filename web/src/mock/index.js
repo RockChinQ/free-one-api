@@ -31,3 +31,63 @@ Mock.mock("/check_password", "post", {
     "code": 0,
     "message": "ok",
 })
+
+Mock.mock(/\/log\/list.*/, "get", {
+    "code": 0,
+    "message": "ok",
+    "data": {
+        "page_count": 10,
+        "logs": [
+            {
+                "id": 1,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 2,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 3,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 4,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 5,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 6,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 7,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 8,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 9,
+                "timestamp": 1612345678,
+                "content": "test",
+            },
+            {
+                "id": 10,
+                "timestamp": 1612345678,
+                "content": "test",
+            }
+        ]
+    }
+})

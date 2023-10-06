@@ -258,3 +258,37 @@ class WebAPIGroup(routergroup.APIGroup):
                     "code": 1,
                     "message": str(e),
                 })
+
+        @self.api("/log/list", ["GET"], auth=True)
+        async def list_logs():
+            try:
+                data = quart.request.args
+                
+                capacity = int(data.get("capacity", 20))
+                page = int(data.get("page", 0))
+                
+                amount = await self.dbmgr.get_logs_amount()
+                
+                logs = await self.dbmgr.select_logs_page(capacity, page)
+                
+                return quart.jsonify({
+                    "code": 0,
+                    "message": "ok",
+                    "data": {
+                        "amount": amount,
+                        "logs": [
+                            {
+                                "id": log[0],
+                                "timestamp": log[1],
+                                "content": log[2],
+                            } for log in logs
+                        ],
+                    },
+                })
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return quart.jsonify({
+                    "code": 1,
+                    "message": str(e),
+                })

@@ -8,7 +8,7 @@ on:
 jobs:
   publish-release-docker-image:
     runs-on: ubuntu-latest
-    name: Build image
+    name: Build release image
     
     steps:
       - name: Checkout
