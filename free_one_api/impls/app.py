@@ -94,6 +94,13 @@ default_config = {
     },
     "logging": {
         "debug": False,
+    },
+    "random_ad": {
+        "enabled": False,
+        "rate": 0.05,
+        "ad_list": [
+            "This response is sponsored by Free One API. Consider star the project on GitHub: https://github.com/RockChinQ/free-one-api",
+        ]
     }
 }
 
@@ -131,7 +138,17 @@ async def make_application(config_path: str) -> Application:
     for handler in logging.getLogger().handlers:
         logging.getLogger().removeHandler(handler)
     
-    logging.getLogger().addHandler(terminal_out)    
+    logging.getLogger().addHandler(terminal_out)
+    
+    # save ad to runtime
+    if 'random_ad' in config and config['random_ad']['enabled']:
+        from ..common import randomad
+        
+        randomad.enabled = config['random_ad']['enabled']
+        randomad.rate = config['random_ad']['rate']
+        randomad.ads = config['random_ad']['ad_list']
+    
+    from ..common import randomad
 
     # make database manager
     from .database import sqlite as sqlitedb

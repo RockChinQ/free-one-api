@@ -3,6 +3,7 @@ import json
 import string
 import random
 import logging
+import typing
 
 import quart
 
@@ -10,6 +11,7 @@ from ...models.forward import mgr as forwardmgr
 from ...models.channel import mgr as channelmgr
 from ...models.key import mgr as apikeymgr
 from ...entities import channel, apikey, request, response, exceptions
+from ...common import randomad
 
 
 class ForwardManager(forwardmgr.AbsForwardManager):
@@ -17,7 +19,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
     def __init__(self, chanmgr: channelmgr.AbsChannelManager, keymgr: apikeymgr.AbsAPIKeyManager):
         self.chanmgr = chanmgr
         self.keymgr = keymgr
-        
+
     async def __stream_query(
         self,
         chan: channel.Channel,
@@ -47,6 +49,23 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                             "finish_reason": resp.finish_reason.value
                         }]
                     }))
+                
+                if randomad.enabled:
+                    for word in randomad.generate_ad():
+                        yield "data: {}\n\n".format(json.dumps({
+                            "id": "chatcmpl-"+id_suffix,
+                            "object": "chat.completion.chunk",
+                            "created": t,
+                            "model": req.model,
+                            "choices": [{
+                                "index": 0,
+                                "delta": {
+                                    "content": word,
+                                },
+                                "finish_reason": response.FinishReason.NULL.value
+                            }]
+                        }))
+                
                 yield "data: [DONE]\n\n"
             except exceptions.QueryHandlingError as e:
                 yield "data: {}\n\ndata: [DONE]\n\n".format(json.dumps({
@@ -95,6 +114,10 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                     resp_tmp = resp
                     normal_message += resp.normal_message
                     
+            if randomad.enabled:
+                for word in randomad.generate_ad():
+                    normal_message += word
+
         except exceptions.QueryHandlingError as e:
             # check for custom error raised by adapter
             return quart.jsonify({
