@@ -6,6 +6,6 @@ tiktoken
 claude-api
 bardapi
 hugchat
-g4f==0.1.4.7
+g4f==0.1.4.9
 revTongYi
 colorlog
