@@ -43,6 +43,6 @@ class WebPageGroup(routergroup.APIGroup):
         
         @self.api("/<path:path>", ["GET"])
         async def static_proxy(path):
-            if not os.path.exists(os.path.join(self.frontend_path, path)):
-                return await quart.send_from_directory(self.frontend_path, "index.html")
+            # if not os.path.exists(os.path.join(self.frontend_path, path)):
+            #     return await quart.send_from_directory(self.frontend_path, "index.html")
             return await quart.send_from_directory(self.frontend_path, path)
