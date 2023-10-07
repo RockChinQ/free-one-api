@@ -73,6 +73,9 @@ onresize = () => {
 <div id="overall_container">
     <div id="table_container" background :style="{ width: keyContainerWidth}">
         <el-pagination id="pages" layout="prev, pager, next" :page-count="page_count" @current-change="changePage" />
+        <span id="operation_bar">
+            <el-button type="success" @click="refreshLogs()">Refresh</el-button>
+        </span>
         <el-table id="log_table" :data="logs" stripe >
             <el-table-column prop="id" label="ID" width="80" />
             <el-table-column prop="time" label="Time" width="180" />
@@ -110,6 +113,17 @@ onresize = () => {
     background-color: white;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     border-radius: 0.4rem;
+}
+
+#operation_bar{
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-left: 10px;
+    margin-top: 0.6rem;
+    width: 100%;
+    height: 100%;
+    display: flex;
 }
 
 #pages{
