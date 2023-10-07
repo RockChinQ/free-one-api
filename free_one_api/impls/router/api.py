@@ -293,3 +293,22 @@ class WebAPIGroup(routergroup.APIGroup):
                     "code": 1,
                     "message": str(e),
                 })
+        
+        @self.api("/info/version", ["GET"], auth=False)
+        async def info_version():
+            try:
+            
+                from ...common import version
+            
+                return quart.jsonify({
+                    "code": 0,
+                    "message": "ok",
+                    "data": "v"+version.__version__,
+                })
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return quart.jsonify({
+                    "code": 1,
+                    "message": str(e),
+                })
