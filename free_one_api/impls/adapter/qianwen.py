@@ -10,6 +10,7 @@ from free_one_api.entities import request, response
 from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request, response, exceptions
+from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
@@ -56,8 +57,9 @@ Method of getting cookie string, please refer to https://github.com/xw5xr6/revTo
     
     chatbot: qwen.Chatbot
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
+        self.eval = eval
         self.chatbot = qwen.Chatbot(
             cookies_str=config['cookie']
         )

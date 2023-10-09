@@ -11,6 +11,7 @@ from free_one_api.entities import request, response
 from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request, response, exceptions
+from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
@@ -52,8 +53,9 @@ Please refer to https://github.com/xtekky/gpt4free
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
+        self.eval = eval
         
     _use_provider: g4f.Provider = None
     _use_stream_provider: g4f.Provider = None

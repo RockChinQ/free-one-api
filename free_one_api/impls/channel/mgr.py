@@ -43,9 +43,13 @@ class ChannelManager(mgr.AbsChannelManager):
 
     async def list_channels(self) -> list[channel.Channel]:
         """List all channels."""
-        self.channels = await self.dbmgr.list_channels()
+        # self.channels = await self.dbmgr.list_channels()
         
         return self.channels
+    
+    async def load_channels(self) -> None:
+        """Load all channels from database."""
+        self.channels = await self.dbmgr.list_channels()
     
     async def create_channel(self, chan: channel.Channel) -> None:
         """Create a channel."""
@@ -71,9 +75,10 @@ class ChannelManager(mgr.AbsChannelManager):
         await self.dbmgr.update_channel(chan)
         for i in range(len(self.channels)):
             if self.channels[i].id == chan.id:
+                chan.preserve_runtime_vars(self.channels[i])
                 self.channels[i] = chan
                 break
-            
+
     async def enable_channel(self, channel_id: int) -> None:
         """Enable a channel."""
         assert await self.has_channel(channel_id)

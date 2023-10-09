@@ -180,7 +180,7 @@ async def make_application(config_path: str) -> Application:
     from .channel import mgr as chanmgr
     
     channelmgr = chanmgr.ChannelManager(dbmgr)
-    await channelmgr.list_channels()
+    await channelmgr.load_channels()
     
     # make key manager
     from .key import mgr as keymgr

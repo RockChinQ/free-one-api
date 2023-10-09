@@ -62,9 +62,6 @@ Method of getting __Secure-1PSID string, please refer to https://github.com/dsda
         if self._chatbot == None:
             self._chatbot = bard.Bard(token=self.config['token'])
         return self._chatbot
-    
-    def __init__(self, config: dict):
-        self.config = config
         
     async def test(self) -> (bool, str):
         try:

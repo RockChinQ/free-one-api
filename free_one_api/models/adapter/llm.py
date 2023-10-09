@@ -3,12 +3,15 @@ import typing
 
 from ...entities import response
 from ...entities import request
+from ...models.channel import evaluation
 
 
 class LLMLibAdapter(metaclass=abc.ABCMeta):
     """Base class for reverse engineering LLM Lib adapters."""
     
     config: dict
+    
+    eval: evaluation.AbsChannelEvaluation
 
     @abc.abstractclassmethod
     def name(self) -> str:
@@ -61,14 +64,14 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """
         return "/v1/chat/completions"
 
-    @abc.abstractmethod
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         """Init adapter with config.
         
         Args:
             config: config of this adapter.
         """
         self.config = config
+        self.eval = eval
 
     def get_config(self) -> dict:
         """Get set config.

@@ -12,6 +12,7 @@ from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request
 from ...entities import response, exceptions
+from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
@@ -73,8 +74,9 @@ Please refer to https://github.com/Soulter/hugging-chat-api
             self._chatbot = hugchat.ChatBot(cookies=cookie.get_dict())
         return self._chatbot
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
+        self.eval = eval
     
     async def test(self) -> (bool, str):
         try:
