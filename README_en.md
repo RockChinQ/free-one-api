@@ -68,10 +68,11 @@ File a issue or pull request if you want to add more.
 ### Docker (Recommended)
 
 ```bash
-docker run -d -p 3000:3000 --name free-one-api -v ./data:/app/data rockchin/free-one-api
+docker run -d -p 3000:3000 --restart always --name free-one-api -v ~/free-one-api/data:/app/data rockchin/free-one-api
 ```
 
-then you can open the admin page at `http://localhost:3000/`.
+This command will start free-one-api and specify `~/free-one-api/data` as the container's file storage mapping directory.  
+Then you can open the admin page at `http://localhost:3000/`.
 
 ### Manual
 
