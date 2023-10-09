@@ -30,7 +30,11 @@ function refreshChannelList() {
                 })
                 return;
             }else{
-                channelList.value = res.data.data;
+                var copy = res.data.data;
+                for (let i = 0; i < copy.length; i++) {
+                    copy[i].loading = false;
+                }
+                channelList.value = copy;
                 ElNotification({
                     message: 'Successfully refreshed channel list.',
                     type: 'success',
@@ -107,6 +111,13 @@ function deleteChannelConfirmed(channel_id) {
 function testChannelLatancy(channel_id) {
     console.log(channel_id);
 
+    for (let i = 0; i < channelList.value.length; i++) {
+        if (channelList.value[i].id == channel_id) {
+            channelList.value[i].loading = true;
+            break
+        }
+    }
+
     axios.post('/api/channel/test/' + channel_id)
         .then(res => {
             console.log(res);
@@ -115,18 +126,20 @@ function testChannelLatancy(channel_id) {
                 
                 for (let i = 0; i < channelList.value.length; i++) {
                     if (channelList.value[i].id == channel_id) {
+                        channelList.value[i].loading = false;
                         channelList.value[i].latency = parseInt(res.data.data.latency*100)/100;
                         break
                     }
                 }
             } else {
                 ElNotification({
-                    message: 'Failed: ' + res.data.message,
+                    message: 'Failed: ' + res.data.message +" Channel: "+channel_id,
                     type: 'error'
                 })
                 
                 for (let i = 0; i < channelList.value.length; i++) {
                     if (channelList.value[i].id == channel_id) {
+                        channelList.value[i].loading = false;
                         channelList.value[i].latency = -1;
                         break
                     }
@@ -141,6 +154,7 @@ function testChannelLatancy(channel_id) {
             })
             for (let i = 0; i < channelList.value.length; i++) {
                 if (channelList.value[i].id == channel_id) {
+                    channelList.value[i].loading = false;
                     channelList.value[i].latency = -1
                     break
                 }
@@ -455,6 +469,7 @@ function applyChannelDetails() {
                 </text>
                 <text class="channel_latency">
                     <el-button class="channel_latency_box" @click="testChannelLatancy(channel.id)"
+                        v-loading="channel.loading"  element-loading-svg-view-box="-35, -35, 120, 120" 
                         :type="channel.latency > 0 ? 'success' : 'default'" plain>{{ channel.latency >= 0 ? channel.latency +
                             's' :
                             'N/A' }}</el-button>
