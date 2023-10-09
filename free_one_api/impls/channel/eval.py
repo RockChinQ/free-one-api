@@ -4,7 +4,7 @@ from ...models.channel import evaluation
 class ChannelEvaluation(evaluation.AbsChannelEvaluation):
     
     def __init__(self):
-        self.records = {}
+        self.records = []
     
     async def evaluate(self) -> float:
         """Implement evaluation algorithm here."""

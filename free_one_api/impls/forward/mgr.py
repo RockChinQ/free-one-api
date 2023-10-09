@@ -12,6 +12,7 @@ from ...models.channel import mgr as channelmgr
 from ...models.key import mgr as apikeymgr
 from ...entities import channel, apikey, request, response, exceptions
 from ...common import randomad
+from ...models.channel import evaluation
 
 
 class ForwardManager(forwardmgr.AbsForwardManager):
@@ -26,15 +27,34 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         req: request.Request,
         id_suffix: str,
     ) -> quart.Response:
+        record: evaluation.Record = evaluation.Record()
+        
         before = time.time()
+        
+        record.start_time = before
+        
+        # calc req msg total length
+        req_msg_total_length = 0
+        
+        for msg in req.messages:
+            for k, v in msg.items():
+                req_msg_total_length += len(str(k))
+                req_msg_total_length += len(str(v))
+                
+        record.req_messages_length = req_msg_total_length
         
         t = int(time.time())
         async def _gen():
             try:
                 async for resp in chan.adapter.query(req):
                     
+                    if record.latency < 0:
+                        record.latency = time.time() - before
+                    
                     if (resp.normal_message is None or len(resp.normal_message) == 0) and resp.finish_reason == response.FinishReason.NULL:
                         continue
+                    
+                    record.resp_message_length += len(resp.normal_message)
                     
                     yield "data: {}\n\n".format(json.dumps({
                         "id": "chatcmpl-"+id_suffix,
@@ -65,9 +85,15 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                                 "finish_reason": response.FinishReason.NULL.value
                             }]
                         }))
+                        
+                record.success = True
                 
                 yield "data: [DONE]\n\n"
             except exceptions.QueryHandlingError as e:
+                
+                record.error = e
+                record.success = False
+                
                 yield "data: {}\n\ndata: [DONE]\n\n".format(json.dumps({
                     "error": {
                         "code": e.code,
@@ -77,8 +103,15 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                     }
                 }))
             except Exception as e:
+                
+                record.error = e
+                record.success = False
+                
                 logging.warning("Exception should be processed by adapter but caught by forward manager:")
                 logging.error(e)
+            finally:
+                record.end_time = time.time()
+                chan.eval.add_record(record)
         
         spent_ms = int((time.time() - before)*1000)
         
@@ -104,7 +137,22 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         req: request.Request,
         id_suffix: str,
     ) -> quart.Response:
+        
+        record = evaluation.Record()
+        
         before = time.time()
+        
+        record.start_time = before
+        
+        # calc req msg total length
+        req_msg_total_length = 0
+        
+        for msg in req.messages:
+            for k, v in msg.items():
+                req_msg_total_length += len(str(k))
+                req_msg_total_length += len(str(v))
+        
+        record.req_messages_length = req_msg_total_length
         
         normal_message = ""
         
@@ -113,15 +161,24 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         try:
         
             async for resp in chan.adapter.query(req):
+                if record.latency < 0:
+                    record.latency = time.time() - before
+                
                 if resp.normal_message is not None:
                     resp_tmp = resp
                     normal_message += resp.normal_message
+                    record.resp_message_length += len(resp.normal_message)
                     
             if randomad.enabled:
                 for word in randomad.generate_ad():
                     normal_message += word
+            
+            record.success = True
 
         except exceptions.QueryHandlingError as e:
+            record.error = e
+            record.success = False
+            
             # check for custom error raised by adapter
             return quart.jsonify({
                 "error": {
@@ -131,6 +188,22 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                     "param": e.param,
                 }
             }), e.status_code
+        except Exception as e:
+            record.error = e
+            record.success = False
+            
+            logging.warning("Exception should be processed by adapter but caught by forward manager:")
+            # check for other error
+            return quart.jsonify({
+                "error": {
+                    "code": 500,
+                    "message": str(e),
+                    "type": "internal",
+                    "param": None,
+                }
+            }), 500
+        finally:
+            record.end_time = time.time()
                 
         spent_ms = int((time.time() - before)*1000)
         
@@ -164,6 +237,8 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 "total_tokens": prompt_tokens + completion_tokens,
             }
         }
+        
+        chan.eval.add_record(record)
         
         return quart.jsonify(result)
 

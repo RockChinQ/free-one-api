@@ -1,27 +1,60 @@
 import abc
 import time
 import enum
+import logging
 
-
-class RecordType(enum.Enum):
-    
-    RESPONSE_DELAY = 1
-    
-    RESPONSE_TOTAL_TIME = 2
-    
-    RESPONSE_LENGTH = 3
-    
 
 class Record:
     
-    type: RecordType
-    value: float
-    time: float
+    start_time: float = 0.0
+    """Start time of request."""
     
-    def __init__(self, type: RecordType, value: float):
-        self.type = type
-        self.value = value
-        self.time = time.time()
+    end_time: float = 0.0
+    """End time of request."""
+    
+    latency: float = -1.0
+    """Latency of request."""
+    
+    req_messages_length: int = 0
+    """Request messages."""
+    
+    resp_message_length: int = 0
+    """Response message length."""
+    
+    success: bool = False
+    """Whether the request is successful."""
+    
+    error: Exception = None
+    """Error of request."""
+    
+    def __init__(
+        self,
+        start_time: float=0.0,
+        end_time: float=0.0,
+        latency: float=-1.0,
+        req_messages_length: int=0,
+        resp_message_length: int=0,
+        success: bool=False,
+        error: Exception=None,
+    ):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.latency = latency
+        self.req_messages_length = req_messages_length
+        self.resp_message_length = resp_message_length
+        self.success = success
+        self.error = error
+        
+    def __str__(self) -> str:
+        return f"""Record(
+    start_time={self.start_time},
+    end_time={self.end_time},
+    latency={self.latency},
+    req_messages_length={self.req_messages_length},
+    resp_message_length={self.resp_message_length},
+    success={self.success},
+    error={self.error},
+)""".replace("\n", "")
 
 
 class AbsChannelEvaluation(metaclass=abc.ABCMeta):
@@ -29,20 +62,16 @@ class AbsChannelEvaluation(metaclass=abc.ABCMeta):
     
     Takes performance or other index into account and give a score of channel.
     """
-    TYPES = RecordType
+    records: list[Record]
     
-    records: dict[RecordType, list[Record]]
-    
-    def record(self, type: RecordType, value: float):
-        """Record a value.
+    def add_record(self, record: Record):
+        """Add a record.
         
         Args:
-            type (RecordType): Type of value.
-            value (float): Value to record.
+            record (Record): Record to add.
         """
-        if type not in self.records:
-            self.records[type] = []
-        self.records[type].append(Record(type, value))
+        logging.debug(f"Add record {record}")
+        self.records.append(record)
 
     @abc.abstractmethod
     async def evaluate(self) -> float:
