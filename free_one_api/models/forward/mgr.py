@@ -29,7 +29,7 @@ class AbsForwardManager(metaclass=abc.ABCMeta):
     """API key manager."""
     
     @abc.abstractmethod
-    def query(
+    async def query(
         self,
         path: str,
         req: request.Request,

@@ -76,6 +76,9 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                         "param": e.param,
                     }
                 }))
+            except Exception as e:
+                logging.warning("Exception should be processed by adapter but caught by forward manager:")
+                logging.error(e)
         
         spent_ms = int((time.time() - before)*1000)
         
