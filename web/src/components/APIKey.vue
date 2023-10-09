@@ -12,7 +12,10 @@ const keyContainerWidth = ref("1000px");
 
 const keyList = ref([]);
 
+const loading = ref(false);
+
 function refreshKeyList() {
+    loading.value = true;
     axios
         .get("/api/key/list")
         .then((res) => {
@@ -28,6 +31,7 @@ function refreshKeyList() {
                 type: "success",
                 duration: 1000,
             });
+            loading.value = false;
         })
         .catch((err) => {
             console.log(err);
@@ -35,6 +39,7 @@ function refreshKeyList() {
                 message: "Failed to refresh key list.",
                 type: "error",
             });
+            loading.value = false;
         });
 }
 
@@ -168,7 +173,7 @@ function deleteKeyConfirmed(key_id){
     <div id="overall_container">
         <div id="key_operation_bar" :style="{ width: keyContainerWidth}">
             <el-button type="success" :icon="DocumentAdd" @click="createKey">Add</el-button>
-            <el-button type="success" :icon="Refresh" @click="refreshKeyList">Refresh</el-button>
+            <el-button v-loading="loading" element-loading-svg-view-box="-25, -25, 100, 100" type="success" :icon="Refresh" @click="refreshKeyList">Refresh</el-button>
         </div>
         <div id="key_list_container" :style="{ width: keyContainerWidth }">
             <div class="key">

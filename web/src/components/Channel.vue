@@ -15,9 +15,13 @@ import { ElNotification } from 'element-plus'
 
 const channelList = ref([]);
 
+const loading = ref(false);
+
 function refreshChannelList() {
+    loading.value = true;
     axios.get('/api/channel/list')
         .then(res => {
+            loading.value = false;
             console.log(res);
             if (res.data.code != 0) {
                 ElNotification({
@@ -35,6 +39,7 @@ function refreshChannelList() {
             }
         })
         .catch(err => {
+            loading.value = false;
             console.log(err);
             ElNotification({
                 message: 'Failed to refresh channel list.',
@@ -428,7 +433,7 @@ function applyChannelDetails() {
     <div id="overall_container">
         <div id="channel_operation_bar" :style="{ width: channelContainerWidth }">
             <el-button type="success" :icon="DocumentAdd" @click="showCreateChannelDialog">Add</el-button>
-            <el-button type="success" :icon="Refresh" @click="refreshChannelList">Refresh</el-button>
+            <el-button type="success" v-loading="loading" element-loading-svg-view-box="-25, -25, 100, 100" :icon="Refresh" @click="refreshChannelList">Refresh</el-button>
             <el-button type="success" :icon="Timer" @click="testAllChannelLatancy">Test All</el-button>
         </div>
         <div id="channel_list_container" :style="{ width: channelContainerWidth }">
