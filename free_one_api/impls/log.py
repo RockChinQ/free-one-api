@@ -23,6 +23,10 @@ class SQLiteHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord):
         """Emit a record."""
+        
+        if 'free_one_api' not in record.pathname:
+            return
+        
         loop = asyncio.get_running_loop()
         
         if self.queue is None:
