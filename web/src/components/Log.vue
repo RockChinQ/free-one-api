@@ -12,8 +12,10 @@ const page_count = ref(0);
 
 const keyContainerWidth = ref("1000px");
 
+const loading = ref(false);
+
 function refreshLogs(){
-    console.log("refreshing logs")
+    loading.value = true;
     axios.get("/api/log/list", {
         params: {
             capacity: 10,
@@ -21,7 +23,7 @@ function refreshLogs(){
         }
     }).then((response) => {
         console.log(response.data);
-
+        loading.value = false;
         if (response.data.code === 0){
             page_count.value = response.data.data.page_count;
 
@@ -40,6 +42,7 @@ function refreshLogs(){
         }
     }).catch(
     (err) => {
+        loading.value = false;
         console.log(err);
         ElNotification({
             message: "Failed to fetch logs.",
@@ -74,7 +77,7 @@ onresize = () => {
     <div id="table_container" background :style="{ width: keyContainerWidth}">
         <el-pagination id="pages" layout="prev, pager, next" :page-count="page_count" @current-change="changePage" />
         <span id="operation_bar">
-            <el-button type="success" @click="refreshLogs()">Refresh</el-button>
+            <el-button v-loading="loading" element-loading-svg-view-box="-25, -25, 100, 100" type="success" @click="refreshLogs()">Refresh</el-button>
         </span>
         <el-table id="log_table" :data="logs" stripe >
             <el-table-column prop="id" label="ID" width="80" />
