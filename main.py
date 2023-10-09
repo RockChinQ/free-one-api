@@ -15,6 +15,7 @@ def main():
     
     application = loop.run_until_complete(app.make_application("./data/config.yaml"))
 
+    logging.getLogger().setLevel(application.logging_level)
     loop.run_until_complete(application.run())
 
 if __name__ == "__main__":

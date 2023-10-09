@@ -145,7 +145,8 @@ Please refer to https://github.com/xtekky/gpt4free
                                         "role": "user",
                                         "content": "Hi, My name is Rock."
                                     }
-                                ]
+                                ],
+                                timeout=120
                             )
                             async for _ in resp:
                                 pass
@@ -194,7 +195,8 @@ Please refer to https://github.com/xtekky/gpt4free
         else:
             resp = provider.create_async_generator(
                 model=req.model,
-                messages=req.messages
+                messages=req.messages,
+                timeout=120
             )
         
         if isinstance(resp, typing.Generator):

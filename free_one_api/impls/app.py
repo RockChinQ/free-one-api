@@ -43,6 +43,8 @@ class Application:
     
     watchdog: wdmgr.AbsWatchDog
     
+    logging_level: int = logging.INFO
+    
     def __init__(
         self,
         dbmgr: db.DatabaseInterface,
@@ -50,12 +52,14 @@ class Application:
         channel: chanmgr.AbsChannelManager,
         key: keymgr.AbsAPIKeyManager,
         watchdog: wdmgr.AbsWatchDog,
+        logging_level: int = logging.INFO,
     ):
         self.dbmgr = dbmgr
         self.router = router
         self.channel = channel
         self.key = key
         self.watchdog = watchdog
+        self.logging_level = logging_level
         
     async def run(self):
         """Run application."""
@@ -124,12 +128,15 @@ async def make_application(config_path: str) -> Application:
         
     if 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true':
         logging_level = logging.DEBUG
-        
+    
+    print("Logging level:", logging_level)
+    logging.debug("Debug mode enabled.")
+    
     terminal_out = logging.StreamHandler()
     
     terminal_out.setLevel(logging_level)
     terminal_out.setFormatter(colorlog.ColoredFormatter(
-        "[%(asctime)s.%(msecs)03d] %(log_color)s%(filename)s (%(lineno)d) - [%(levelname)s] : "
+        "[%(asctime)s.%(msecs)03d] %(log_color)s%(pathname)s (%(lineno)d) - [%(levelname)s] :\n"
             "%(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         log_colors=log_colors_config,
@@ -163,7 +170,8 @@ async def make_application(config_path: str) -> Application:
     # database handler
     dblogger = log.SQLiteHandler(dbmgr)
     
-    dblogger.setLevel(logging_level)
+    # failed to set debug level for db handler
+    dblogger.setLevel(logging.INFO if logging_level <= logging.INFO else logging_level)
     dblogger.setFormatter(logging.Formatter("[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s"))
     
     logging.getLogger().addHandler(dblogger)
@@ -233,6 +241,7 @@ async def make_application(config_path: str) -> Application:
         channel=channelmgr,
         key=apikeymgr,
         watchdog=wdmgr,
+        logging_level=logging_level,
     )
     
     logging.info("Application initialized.")
