@@ -190,13 +190,14 @@ Please refer to https://github.com/xtekky/gpt4free
             resp = await g4f.ChatCompletion.create_async(
                 model=req.model,
                 messages=req.messages,
-                provider=provider
+                provider=provider,
+                timeout=180
             )
         else:
             resp = provider.create_async_generator(
                 model=req.model,
                 messages=req.messages,
-                timeout=120
+                timeout=180
             )
         
         if isinstance(resp, typing.Generator):
