@@ -1,3 +1,5 @@
+import random
+
 from ...models.channel import evaluation
 
 
@@ -8,4 +10,4 @@ class ChannelEvaluation(evaluation.AbsChannelEvaluation):
     
     async def evaluate(self) -> float:
         """Implement evaluation algorithm here."""
-        return 0.0
+        return random.random()

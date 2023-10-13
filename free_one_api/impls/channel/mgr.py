@@ -2,6 +2,7 @@
 import time
 import asyncio
 import random
+import logging
 
 from ...entities import channel, request, exceptions
 from ...models.database import db
@@ -166,7 +167,7 @@ class ChannelManager(mgr.AbsChannelManager):
             if model_name in models:
                 channel_copy_tmp.append(chan)
                 
-        channel_copy = channel_copy_tmp
+        channel_copy: list[channel.Channel] = channel_copy_tmp
         
         if len(channel_copy) == 0:
             raise exceptions.QueryHandlingError(
@@ -175,6 +176,31 @@ class ChannelManager(mgr.AbsChannelManager):
                 "No suitable channel found. You may need to contact your admin or check the documentation at https://github.com/RockChinQ/free-one-api",
             )
         
-        # i just randomly select one channel now!
+        # get scores of each option
+        evaluated_objects = await asyncio.gather(*[obj.eval.evaluate() for obj in channel_copy])
+        # scores = [(ch, ch.eval.evaluate_sync()) for ch in channel_copy]
+        
+        combined = zip(channel_copy, evaluated_objects)
+        
+        scores = sorted(
+            combined,
+            key=lambda x: x[1],
+            reverse=True,
+        )
+        
+        logging.debug(f"Scores: {scores}")
+        
+        # check if there are channels with the same score in the head
+        # if so, randomly select one of them
+        max_score = scores[0][1]
+    
+        max_score_channels = []
+        
+        for chan in scores:
+            if chan[1] == max_score:
+                max_score_channels.append(chan[0])
+            else:
+                break
+
         random.seed(time.time())
-        return random.choice(channel_copy)
+        return random.choice(max_score_channels)

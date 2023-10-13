@@ -28,6 +28,8 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         id_suffix: str,
     ) -> quart.Response:
         record: evaluation.Record = evaluation.Record()
+        record.stream = True
+        chan.eval.add_record(record)
         
         before = time.time()
         
@@ -110,8 +112,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 logging.warning("Exception should be processed by adapter but caught by forward manager:")
                 logging.error(e)
             finally:
-                record.end_time = time.time()
-                chan.eval.add_record(record)
+                record.commit()
         
         spent_ms = int((time.time() - before)*1000)
         
@@ -139,6 +140,9 @@ class ForwardManager(forwardmgr.AbsForwardManager):
     ) -> quart.Response:
         
         record = evaluation.Record()
+        record.stream = False
+        
+        chan.eval.add_record(record)
         
         before = time.time()
         
@@ -163,12 +167,12 @@ class ForwardManager(forwardmgr.AbsForwardManager):
             async for resp in chan.adapter.query(req):
                 if record.latency < 0:
                     record.latency = time.time() - before
-                
+
                 if resp.normal_message is not None:
                     resp_tmp = resp
                     normal_message += resp.normal_message
                     record.resp_message_length += len(resp.normal_message)
-                    
+
             if randomad.enabled:
                 for word in randomad.generate_ad():
                     normal_message += word
@@ -203,7 +207,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 }
             }), 500
         finally:
-            record.end_time = time.time()
+            record.commit()
                 
         spent_ms = int((time.time() - before)*1000)
         
@@ -237,8 +241,6 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 "total_tokens": prompt_tokens + completion_tokens,
             }
         }
-        
-        chan.eval.add_record(record)
         
         return quart.jsonify(result)
 

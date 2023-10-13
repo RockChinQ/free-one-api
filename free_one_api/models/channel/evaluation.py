@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import time
 import enum
 import logging
@@ -9,7 +10,7 @@ class Record:
     start_time: float = 0.0
     """Start time of request."""
     
-    end_time: float = 0.0
+    end_time: float = -1
     """End time of request."""
     
     latency: float = -1.0
@@ -20,6 +21,9 @@ class Record:
     
     resp_message_length: int = 0
     """Response message length."""
+    
+    stream: bool = False
+    """Whether the request is stream mode."""
     
     success: bool = False
     """Whether the request is successful."""
@@ -45,15 +49,19 @@ class Record:
         self.success = success
         self.error = error
         
+    def commit(self):
+        self.end_time = time.time()
+        logging.debug(f"Commit record {self}")
+        
     def __str__(self) -> str:
-        return f"""Record(
-    start_time={self.start_time},
-    end_time={self.end_time},
-    latency={self.latency},
-    req_messages_length={self.req_messages_length},
-    resp_message_length={self.resp_message_length},
-    success={self.success},
-    error={self.error},
+        return f"""Record(start_time={self.start_time}, 
+end_time={self.end_time}, 
+latency={self.latency}, 
+req_messages_length={self.req_messages_length}, 
+resp_message_length={self.resp_message_length}, 
+stream={self.stream}, 
+success={self.success}, 
+error={self.error}
 )""".replace("\n", "")
 
 
@@ -70,7 +78,6 @@ class AbsChannelEvaluation(metaclass=abc.ABCMeta):
         Args:
             record (Record): Record to add.
         """
-        logging.debug(f"Add record {record}")
         self.records.append(record)
 
     @abc.abstractmethod

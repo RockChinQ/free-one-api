@@ -113,3 +113,6 @@ class Channel:
         """
         self.fail_count = chan1.fail_count
         self.eval = chan1.eval
+
+    def __repr__(self) -> str:
+        return f"<Channel {self.id} {self.name}>"
