@@ -19,7 +19,7 @@ class HeartBeatTask(task.AbsTask):
         self.channel = chan
         self.cfg = cfg
         
-        self.delay = 10
+        self.delay = 5
         self.interval = cfg['interval']
 
     async def trigger(self):
@@ -30,7 +30,7 @@ class HeartBeatTask(task.AbsTask):
         for chan in self.channel.channels:
             if chan.enabled:
                 async def process(ch: channel.Channel):
-                    random_delay = random.randint(0, 10)
+                    random_delay = random.randint(0, 30)
                     await asyncio.sleep(random_delay)
                     
                     fail_count = await ch.heartbeat(timeout=self.cfg["timeout"])
