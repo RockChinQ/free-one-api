@@ -6,6 +6,8 @@ import tiktoken
 
 from ..models.adapter import llm
 from ..models import adapter
+from ..models.channel import evaluation
+from ..impls.channel import eval as evl
 
 
 class Channel:
@@ -24,16 +26,20 @@ class Channel:
 
     latency: int
     
+    eval: evaluation.AbsChannelEvaluation
+    
     fail_count: int
     """Amount of sequential failures. Only in memory."""
 
-    def __init__(self, id: int, name: str, adapter: llm.LLMLibAdapter, model_mapping: dict, enabled: bool, latency: int):
+    def __init__(self, id: int, name: str, adapter: llm.LLMLibAdapter, model_mapping: dict, enabled: bool, latency: int, eval: evaluation.AbsChannelEvaluation):
         self.id = id
         self.name = name
         self.adapter = adapter
         self.model_mapping = model_mapping
         self.enabled = enabled
         self.latency = latency
+        self.eval = eval
+        
         self.fail_count = 0
 
     @classmethod
@@ -49,13 +55,16 @@ class Channel:
 
     @classmethod
     def load_channel(cls, data: dict) -> 'Channel':
+        
+        eval = evl.ChannelEvaluation()
         return cls(
             data["id"],
             data["name"],
-            adapter.load_adapter(data["adapter"]),
+            adapter.load_adapter(data["adapter"], eval),
             data["model_mapping"],
             data["enabled"],
             data["latency"],
+            eval,
         )
 
     def count_tokens(
@@ -92,3 +101,19 @@ class Channel:
         finally:
             self.fail_count += 1
             return self.fail_count
+
+    def preserve_runtime_vars(
+        self,
+        chan1: 'Channel',
+    ):
+        """Preserve runtime variables from another channel.
+        
+        Args:
+            chan1: channel to preserve from.
+            
+        """
+        self.fail_count = chan1.fail_count
+        self.eval = chan1.eval
+
+    def __repr__(self) -> str:
+        return f"<Channel {self.id} {self.name}>"

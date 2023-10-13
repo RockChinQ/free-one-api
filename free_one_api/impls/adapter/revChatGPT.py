@@ -9,6 +9,7 @@ from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request
 from ...entities import response, exceptions
+from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
@@ -70,8 +71,9 @@ Please refer to https://github.com/acheong08/ChatGPT
     
     chatbot: chatgpt.AsyncChatbot
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
+        self.eval = eval
         self.chatbot = chatgpt.AsyncChatbot(
             config=config,
             base_url="https://chatproxy.rockchin.top/api/"

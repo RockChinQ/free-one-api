@@ -2,6 +2,8 @@ import json
 
 from . import llm
 
+from ...models.channel import evaluation
+
 
 # Utility for adapter management
 
@@ -32,11 +34,11 @@ def list_adapters() -> list[str]:
     ]
 
 
-def load_adapter(data: dict) -> llm.LLMLibAdapter:
+def load_adapter(data: dict, eval: evaluation.AbsChannelEvaluation) -> llm.LLMLibAdapter:
     """Load adapter from dict."""
     obj = data
 
-    return adapters[obj["type"]](obj["config"])
+    return adapters[obj["type"]](obj["config"], eval)
 
 
 def dump_adapter(adapter: llm.LLMLibAdapter) -> dict:

@@ -20,6 +20,11 @@ class AbsChannelManager(metaclass=abc.ABCMeta):
     async def list_channels(self) -> list[channel.Channel]:
         """List all channels."""
         pass
+    
+    @abc.abstractmethod
+    async def load_channels(self) -> None:
+        """Load all channels from database."""
+        pass
 
     @abc.abstractmethod
     async def create_channel(self, chan: channel.Channel) -> None:

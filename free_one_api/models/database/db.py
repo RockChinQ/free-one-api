@@ -7,11 +7,6 @@ class DatabaseInterface(metaclass=abc.ABCMeta):
     """Base class for database interface."""
 
     @abc.abstractmethod
-    async def get_channel(self, channel_id: int) -> channel.Channel:
-        """Get a channel."""
-        return
-
-    @abc.abstractmethod
     async def list_channels(self) -> list[channel.Channel]:
         """Load all channels."""
         return

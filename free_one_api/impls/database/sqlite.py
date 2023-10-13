@@ -6,6 +6,7 @@ import aiosqlite
 from ...models.database import db as dbmod
 from ...models import adapter
 from ...entities import channel, apikey
+from ..channel import eval as evl
 
 channel_table_sql = """
 CREATE TABLE IF NOT EXISTS channel (
@@ -49,19 +50,6 @@ class SQLiteDB(dbmod.DatabaseInterface):
             await db.execute(log_table_sql)
             await db.commit()
 
-    async def get_channel(self, channel_id: int) -> channel.Channel:
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute("SELECT * FROM channel WHERE id = ?", (channel_id,)) as cursor:
-                row = await cursor.fetchone()
-                return channel.Channel(
-                    id=row[0],
-                    name=row[1],
-                    adapter=adapter.load_adapter(json.loads(row[2])),
-                    model_mapping=json.loads(row[3]),
-                    enabled=bool(row[4]),
-                    latency=row[5],
-                )
-
     async def list_channels(self) -> list[channel.Channel]:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute("SELECT * FROM channel") as cursor:
@@ -69,10 +57,11 @@ class SQLiteDB(dbmod.DatabaseInterface):
                 return [channel.Channel(
                     id=row[0],
                     name=row[1],
-                    adapter=adapter.load_adapter(json.loads(row[2])),
+                    adapter=adapter.load_adapter(json.loads(row[2]), eval),
                     model_mapping=json.loads(row[3]),
                     enabled=bool(row[4]),
                     latency=row[5],
+                    eval=evl.ChannelEvaluation(),
                 ) for row in rows]
 
     async def insert_channel(self, chan: channel.Channel) -> None:

@@ -11,6 +11,7 @@ from free_one_api.entities import request, response
 from ...models import adapter
 from ...models.adapter import llm
 from ...entities import request, response, exceptions
+from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
@@ -52,8 +53,9 @@ Please refer to https://github.com/xtekky/gpt4free
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
+        self.eval = eval
         
     _use_provider: g4f.Provider = None
     _use_stream_provider: g4f.Provider = None
@@ -190,13 +192,14 @@ Please refer to https://github.com/xtekky/gpt4free
             resp = await g4f.ChatCompletion.create_async(
                 model=req.model,
                 messages=req.messages,
-                provider=provider
+                provider=provider,
+                timeout=180
             )
         else:
             resp = provider.create_async_generator(
                 model=req.model,
                 messages=req.messages,
-                timeout=120
+                timeout=180
             )
         
         if isinstance(resp, typing.Generator):

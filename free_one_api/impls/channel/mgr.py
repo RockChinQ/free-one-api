@@ -2,6 +2,7 @@
 import time
 import asyncio
 import random
+import logging
 
 from ...entities import channel, request, exceptions
 from ...models.database import db
@@ -43,9 +44,13 @@ class ChannelManager(mgr.AbsChannelManager):
 
     async def list_channels(self) -> list[channel.Channel]:
         """List all channels."""
-        self.channels = await self.dbmgr.list_channels()
+        # self.channels = await self.dbmgr.list_channels()
         
         return self.channels
+    
+    async def load_channels(self) -> None:
+        """Load all channels from database."""
+        self.channels = await self.dbmgr.list_channels()
     
     async def create_channel(self, chan: channel.Channel) -> None:
         """Create a channel."""
@@ -71,9 +76,10 @@ class ChannelManager(mgr.AbsChannelManager):
         await self.dbmgr.update_channel(chan)
         for i in range(len(self.channels)):
             if self.channels[i].id == chan.id:
+                chan.preserve_runtime_vars(self.channels[i])
                 self.channels[i] = chan
                 break
-            
+
     async def enable_channel(self, channel_id: int) -> None:
         """Enable a channel."""
         assert await self.has_channel(channel_id)
@@ -161,7 +167,7 @@ class ChannelManager(mgr.AbsChannelManager):
             if model_name in models:
                 channel_copy_tmp.append(chan)
                 
-        channel_copy = channel_copy_tmp
+        channel_copy: list[channel.Channel] = channel_copy_tmp
         
         if len(channel_copy) == 0:
             raise exceptions.QueryHandlingError(
@@ -170,6 +176,31 @@ class ChannelManager(mgr.AbsChannelManager):
                 "No suitable channel found. You may need to contact your admin or check the documentation at https://github.com/RockChinQ/free-one-api",
             )
         
-        # i just randomly select one channel now!
+        # get scores of each option
+        evaluated_objects = await asyncio.gather(*[obj.eval.evaluate() for obj in channel_copy])
+        evaluated_objects = [int(v*100)/100 for v in evaluated_objects]
+        
+        combined = zip(channel_copy, evaluated_objects)
+
+        scores = sorted(
+            combined,
+            key=lambda x: x[1],
+            reverse=True,
+        )
+        
+        logging.debug(f"Scores: {scores}")
+        
+        # check if there are channels with the same score in the head
+        # if so, randomly select one of them
+        max_score = scores[0][1]
+    
+        max_score_channels = []
+        
+        for chan in scores:
+            if chan[1] == max_score:
+                max_score_channels.append(chan[0])
+            else:
+                break
+
         random.seed(time.time())
-        return random.choice(channel_copy)
+        return random.choice(max_score_channels)
