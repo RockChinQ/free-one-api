@@ -139,6 +139,17 @@ function logout(){
     background-color: #ddd;
 }
 
+#login_info {
+    position: absolute;
+    right: 0;
+    margin-right: 0.2rem;
+    height: 100%;
+    padding-inline: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .no_url_style {
     text-decoration: none;
     color: inherit;
