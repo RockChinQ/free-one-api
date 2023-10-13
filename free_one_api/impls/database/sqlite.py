@@ -54,7 +54,6 @@ class SQLiteDB(dbmod.DatabaseInterface):
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute("SELECT * FROM channel") as cursor:
                 rows = await cursor.fetchall()
-                eval = evl.ChannelEvaluation()
                 return [channel.Channel(
                     id=row[0],
                     name=row[1],
@@ -62,7 +61,7 @@ class SQLiteDB(dbmod.DatabaseInterface):
                     model_mapping=json.loads(row[3]),
                     enabled=bool(row[4]),
                     latency=row[5],
-                    eval=eval,
+                    eval=evl.ChannelEvaluation(),
                 ) for row in rows]
 
     async def insert_channel(self, chan: channel.Channel) -> None:

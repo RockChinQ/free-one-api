@@ -10,7 +10,7 @@ class Record:
     start_time: float = 0.0
     """Start time of request."""
     
-    end_time: float = -1
+    end_time: float = -1.0
     """End time of request."""
     
     latency: float = -1.0
@@ -34,7 +34,7 @@ class Record:
     def __init__(
         self,
         start_time: float=0.0,
-        end_time: float=0.0,
+        end_time: float=-1.0,
         latency: float=-1.0,
         req_messages_length: int=0,
         resp_message_length: int=0,
@@ -52,7 +52,7 @@ class Record:
     def commit(self):
         self.end_time = time.time()
         logging.debug(f"Commit record {self}")
-        
+
     def __str__(self) -> str:
         return f"""Record(start_time={self.start_time}, 
 end_time={self.end_time}, 

@@ -178,10 +178,10 @@ class ChannelManager(mgr.AbsChannelManager):
         
         # get scores of each option
         evaluated_objects = await asyncio.gather(*[obj.eval.evaluate() for obj in channel_copy])
-        # scores = [(ch, ch.eval.evaluate_sync()) for ch in channel_copy]
+        evaluated_objects = [int(v*100)/100 for v in evaluated_objects]
         
         combined = zip(channel_copy, evaluated_objects)
-        
+
         scores = sorted(
             combined,
             key=lambda x: x[1],

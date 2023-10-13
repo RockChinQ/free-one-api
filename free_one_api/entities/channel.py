@@ -55,6 +55,7 @@ class Channel:
 
     @classmethod
     def load_channel(cls, data: dict) -> 'Channel':
+        
         eval = evl.ChannelEvaluation()
         return cls(
             data["id"],
