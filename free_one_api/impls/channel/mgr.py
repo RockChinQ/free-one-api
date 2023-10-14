@@ -3,6 +3,8 @@ import time
 import asyncio
 import random
 import logging
+import json
+import os
 
 from ...entities import channel, request, exceptions
 from ...models.database import db
@@ -15,6 +17,8 @@ class ChannelManager(mgr.AbsChannelManager):
     Provides channel creation, deletion, updating and listing,
     or selecting channel according to load balance algorithm.
     """
+    
+    dump_score_records: bool = False
 
     def __init__(
         self,
@@ -22,6 +26,7 @@ class ChannelManager(mgr.AbsChannelManager):
     ):
         self.dbmgr = dbmgr
         self.channels = []
+        self.dump_score_records = os.getenv("DUMP_SCORE_RECORDS", "false").lower() == "true"
         
     async def has_channel(self, channel_id: int) -> bool:
         for chan in self.channels:
@@ -119,6 +124,7 @@ class ChannelManager(mgr.AbsChannelManager):
         self,
         path: str,
         req: request.Request,
+        id_suffix: str="",
     ) -> channel.Channel:
         """Select a channel.
         
@@ -139,6 +145,7 @@ class ChannelManager(mgr.AbsChannelManager):
         Args:
             path: path of this request.
             req: request object.
+            id_suffix: suffix of channel id.
             
         """
         stream_mode = req.stream
@@ -188,7 +195,16 @@ class ChannelManager(mgr.AbsChannelManager):
             reverse=True,
         )
         
-        logging.debug(f"Scores: {scores}")
+        score_dump = []
+        
+        for chan, score in scores:
+            score_dump.append({
+                "name": chan.name,
+                "id": chan.id,
+                "score": score,
+            })
+        
+        logging.info(f"Scores: {json.dumps(score_dump)}, id_suffix: {id_suffix}")
         
         # check if there are channels with the same score in the head
         # if so, randomly select one of them

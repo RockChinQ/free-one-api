@@ -25,7 +25,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         self,
         chan: channel.Channel,
         req: request.Request,
-        id_suffix: str,
+        resp_id: str,
     ) -> quart.Response:
         record: evaluation.Record = evaluation.Record()
         record.stream = True
@@ -59,7 +59,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                     record.resp_message_length += len(resp.normal_message)
                     
                     yield "data: {}\n\n".format(json.dumps({
-                        "id": "chatcmpl-"+id_suffix,
+                        "id": "chatcmpl-"+resp_id,
                         "object": "chat.completion.chunk",
                         "created": t,
                         "model": req.model,
@@ -75,7 +75,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 if randomad.enabled:
                     for word in randomad.generate_ad():
                         yield "data: {}\n\n".format(json.dumps({
-                            "id": "chatcmpl-"+id_suffix,
+                            "id": "chatcmpl-"+resp_id,
                             "object": "chat.completion.chunk",
                             "created": t,
                             "model": req.model,
@@ -136,7 +136,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         self,
         chan: channel.Channel,
         req: request.Request,
-        id_suffix: str,
+        resp_id: str,
     ) -> quart.Response:
         
         record = evaluation.Record()
@@ -221,7 +221,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         )
         
         result = {
-            "id": "chatcmpl-"+id_suffix,
+            "id": "chatcmpl-"+resp_id,
             "object": "chat.completion",
             "created": int(time.time()),
             "model": req.model,
@@ -251,9 +251,11 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         raw_data: dict,
     ) -> quart.Response:
         
+        id_suffix = "".join(random.choices(string.ascii_letters+string.digits, k=21))
         chan: channel.Channel = await self.chanmgr.select_channel(
             path,
             req,
+            id_suffix
         )
         
         # find model replacement
@@ -264,20 +266,21 @@ class ForwardManager(forwardmgr.AbsForwardManager):
         if chan is None:
             pass
         
-        id_suffix = ""
-        id_suffix += "{}".format(chan.id).zfill(3)
-        id_suffix += chan.adapter.__class__.__name__[:10]
-        id_suffix += "".join(random.choices(string.ascii_letters+string.digits, k=29-len(id_suffix)))
+        resp_id = ""
+        resp_id += "{}".format(chan.id).zfill(3)
+        resp_id += chan.adapter.__class__.__name__[:5]
+        
+        resp_id += id_suffix
         
         auth = quart.request.headers.get("Authorization")
         if auth.startswith("Bearer "):
             auth = auth[7:]
         
-        query_info_str = f"type=query, path={path}, model={req.model}, id_suffix={id_suffix}, channel_name={chan.name}, channel_adpater={chan.adapter.__class__.__name__}, key={auth}"
+        query_info_str = f"type=query, path={path}, model={req.model}, id_suffix={resp_id}, channel_name={chan.name}, channel_adpater={chan.adapter.__class__.__name__}, key={auth}"
         
         logging.info(query_info_str)
         
         if req.stream:
-            return await self.__stream_query(chan, req, id_suffix)
+            return await self.__stream_query(chan, req, resp_id)
         else:
-            return await self.__non_stream_query(chan, req, id_suffix)
+            return await self.__non_stream_query(chan, req, resp_id)

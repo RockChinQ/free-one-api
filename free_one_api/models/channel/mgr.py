@@ -64,6 +64,7 @@ class AbsChannelManager(metaclass=abc.ABCMeta):
         self,
         path: str,
         req: request.Request,
+        id_suffix: str,
     ) -> channel.Channel:
         """Select a channel.
         
@@ -72,5 +73,6 @@ class AbsChannelManager(metaclass=abc.ABCMeta):
         Args:
             path: path of this request.
             req: request object.
+            id_suffix: suffix of channel id.
         """
         pass
