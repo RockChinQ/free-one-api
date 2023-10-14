@@ -17,7 +17,7 @@ class ChannelEvaluation(evaluation.AbsChannelEvaluation):
         
         Sum up:
         
-         - `0 - last5RecordsAverageLatency`
+         - `0 - last5StreamRecordsAverageLatency`
          - `lastUseTime`, 0 if using
         """
         records_reverse = self.records[::-1]
@@ -41,9 +41,9 @@ class ChannelEvaluation(evaluation.AbsChannelEvaluation):
             if len(last5Records) >= 5:
                 break
             if record.end_time > 0:  # committed
-                if record.success:
+                if record.success and record.stream:
                     last5Records.append(record)
 
-        last5RecordsAverageLatency = sum([record.latency for record in last5Records]) / len(last5Records) if len(last5Records) > 0 else 0
+        last5StreamRecordsAverageLatency = sum([record.latency for record in last5Records]) / len(last5Records) if len(last5Records) > 0 else 0
         
-        return (0 - last5RecordsAverageLatency) + lastUseTime
+        return (0 - last5StreamRecordsAverageLatency) + lastUseTime
