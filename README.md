@@ -151,6 +151,11 @@ database:
   type: sqlite
 logging:
   debug: false  # 是否开启调试日志
+misc:
+  # acheong08/ChatGPT 适配器的反向代理路径
+  # 默认的公共反代可能不稳定，建议自行搭建:
+  # https://github.com/acheong08/ChatGPT-Proxy-V4
+  chatgpt_api_base: https://chatproxy.rockchin.top/api/
 # 随机广告
 # 会随机追加到每个响应的末尾
 random_ad:

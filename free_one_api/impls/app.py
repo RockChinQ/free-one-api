@@ -24,6 +24,7 @@ from .adapter import hugchat
 from .adapter import qianwen
 
 from . import log
+from . import cfg as cfgutil
 
 
 class Application:
@@ -78,6 +79,7 @@ log_colors_config = {
 }
 
 default_config = {
+    "1-documentation": "see at https://github.com/RockChinQ/free-one-api",
     "database": {
         "type": "sqlite",
         "path": "./data/free_one_api.db",
@@ -105,6 +107,9 @@ default_config = {
         "ad_list": [
             " (This response is sponsored by Free One API. Consider star the project on GitHub: https://github.com/RockChinQ/free-one-api )",
         ]
+    },
+    "misc": {
+        "chatgpt_api_base": "https://chatproxy.rockchin.top/api/",
     }
 }
 
@@ -119,6 +124,18 @@ async def make_application(config_path: str) -> Application:
     config = {}
     with open(config_path, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
+
+    # complete config
+    config = cfgutil.complete_config(config, default_config)
+    
+    # dump config
+    with open(config_path, "w") as f:
+        yaml.dump(config, f)
+        
+    # set default values
+    from .adapter import revChatGPT
+    
+    revChatGPT.RevChatGPTAdapter.CHATGPT_API_BASE = config['misc']['chatgpt_api_base']
 
     # logging
     logging_level = logging.INFO
