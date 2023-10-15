@@ -195,3 +195,10 @@ Can only use the channel, can't login:
 api_base: https://foa.rockchin.top/v1  
 api_key: sk-foaDfZxzvfrwfqkBDJEMq7C0rdXkhOjXx4aM23pH42tv8SJ4  
 model: gpt-3.5-turbo  
+
+## Performance
+
+Gantt chart of request time with 4 channel enabled and 8 threads in client side:  
+(Channel labelled with `Channel ID <id> <request count>`, X axis is time in seconds)
+
+<img width="500" alt="image" src="assets/load_balance.png">
