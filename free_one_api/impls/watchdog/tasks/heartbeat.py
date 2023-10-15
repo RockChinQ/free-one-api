@@ -34,9 +34,9 @@ class HeartBeatTask(task.AbsTask):
                     await asyncio.sleep(random_delay)
                     
                     fail_count = await ch.heartbeat(timeout=self.cfg["timeout"])
-                    if fail_count > self.cfg["fail_limit"]:
+                    if fail_count >= self.cfg["fail_limit"]:
                         try:
-                            self.channel.disable_channel(ch.id)
+                            await self.channel.disable_channel(ch.id)
                             logging.info(f"Disabled channel {ch.id} due to heartbeat failed {fail_count} times")
                         except Exception:
                             logging.warn(f"Failed to disable channel {ch.id}, traceback: {traceback.format_exc()}")
