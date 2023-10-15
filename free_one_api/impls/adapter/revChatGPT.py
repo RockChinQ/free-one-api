@@ -15,6 +15,8 @@ from ...models.channel import evaluation
 @adapter.llm_adapter
 class RevChatGPTAdapter(llm.LLMLibAdapter):
     
+    CHATGPT_API_BASE = "https://chatproxy.rockchin.top/api/"
+    
     @classmethod
     def name(cls) -> str:
         return "acheong08/ChatGPT"
@@ -62,6 +64,17 @@ and you can also provide other optional params supported by acheong08/ChatGPT:
   "unverified_plugin_domains":["showme.redstarplugin.com"] // Unverfied plugins to install
 }
 
+RevChatGPT now need a reverse proxy to access the API, 
+use a proxy address set up by RockChinQ by default, but it may be unstable.
+Consider set up your own reverse proxy: https://github.com/acheong08/ChatGPT-Proxy-V4
+If you have set up your own reverse proxy, you can set it in config as:
+{
+    "reverse_proxy": "https://your-reverse-proxy-address.com/api/"
+}
+
+Also you can set your own proxy address in config file, 
+please refer to the documentation of Free One API.
+
 Please refer to https://github.com/acheong08/ChatGPT
 """
     
@@ -74,9 +87,20 @@ Please refer to https://github.com/acheong08/ChatGPT
     def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
         self.eval = eval
+        
+        reverse_proxy = RevChatGPTAdapter.CHATGPT_API_BASE
+        
+        config_copy = config.copy()
+        
+        if 'reverse_proxy' in config_copy:
+            reverse_proxy = config_copy['reverse_proxy']
+            
+            # delete reverse_proxy from config
+            del config_copy['reverse_proxy']
+        
         self.chatbot = chatgpt.AsyncChatbot(
-            config=config,
-            base_url="https://chatproxy.rockchin.top/api/"
+            config=config_copy,
+            base_url=reverse_proxy,
         )
     
     async def test(self) -> (bool, str):
