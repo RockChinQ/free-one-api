@@ -21,6 +21,11 @@
     - /log
         - GET /list
             - page:int capacity:int
+    - /info
+        - GET /version
+    - /statistic
+        - /channel
+            - GET /records
 
 ## Entities
 

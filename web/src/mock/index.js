@@ -91,3 +91,46 @@ Mock.mock(/\/api\/log\/list.*/, "get", {
         ]
     }
 })
+
+Mock.mock("/api/statistic/channel/records", {
+    "code": 0,
+    "message": "ok",
+    "data": {
+        "records": {
+            "1": [
+                {
+                    "start": 1612345678,
+                    "end": 1612345701,
+                    "latency": 2.34,
+                },
+                {
+                    "start": 1612345703,
+                    "end": 1612345711,
+                    "latency": 5.2,
+                },
+                {
+                    "start": 1612345767,
+                    "end": 1612345778,
+                    "latency": 1.2,
+                }
+            ],
+            "2": [
+                {
+                    "start": 1612345680,
+                    "end": 1612345701,
+                    "latency": 2.34,
+                },
+                {
+                    "start": 1612345708,
+                    "end": 1612345711,
+                    "latency": 5.2,
+                },
+                {
+                    "start": 1612345779,
+                    "end": 1612345798,
+                    "latency": 1.2,
+                }
+            ]
+        }
+    }
+})

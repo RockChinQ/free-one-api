@@ -89,6 +89,12 @@ default_config = {
             "fail_limit": 3,
         },
     },
+    "channel": {
+        "heartbeat": {
+            "interval": 1800,
+            "fail_limit": 3,
+        },
+    },
     "router": {
         "port": 3000,
         "token": "12345678",
