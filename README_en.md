@@ -151,6 +151,11 @@ database:
   type: sqlite
 logging:
   debug: false  # Enable debug log
+misc:
+  # Reverse proxy address for acheong08/ChatGPT adapter.
+  # Default public reverse proxy may be unstable, it is recommended to build your own:
+  # https://github.com/acheong08/ChatGPT-Proxy-V4
+  chatgpt_api_base: https://chatproxy.rockchin.top/api/
 # Random advertisement, will be appended to the end of each response
 random_ad:
   # advertisement list
