@@ -196,3 +196,10 @@ web:
 api_base: https://foa.rockchin.top/v1  
 api_key: sk-foaDfZxzvfrwfqkBDJEMq7C0rdXkhOjXx4aM23pH42tv8SJ4  
 model: gpt-3.5-turbo  
+
+## 性能
+
+启用4个通道，客户端8个线程的请求时间甘特图：  
+(通道标记为 `Channel ID <id> <request count>`, X 轴为时间秒数)
+
+<img width="500" alt="image" src="assets/load_balance.png">
