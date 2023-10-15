@@ -204,7 +204,7 @@ model: gpt-3.5-turbo
 
 ## 负载均衡性能
 
-启用4个通道，客户端8个线程的请求时间甘特图，请求提问“write a quick sort in Java”：  
+启用4个通道，客户端16个线程的请求时间甘特图，请求提问“write a quick sort in Java”：  
 (通道标记为 `Channel ID <id> <request count>`, X 轴为时间秒数)
 
 <img width="750" alt="image" src="assets/load_balance.png">
