@@ -203,7 +203,7 @@ model: gpt-3.5-turbo
 
 ## Performance
 
-Gantt chart of request time with 4 channel enabled and 8 threads in client side:  
+Gantt chart of request time with 4 channel enabled and 16 threads in client side, querying question "write a quick sort in Java":  
 (Channel labelled with `Channel ID <id> <request count>`, X axis is time in seconds)
 
-<img width="500" alt="image" src="assets/load_balance.png">
+<img width="750" alt="image" src="assets/load_balance.png">
