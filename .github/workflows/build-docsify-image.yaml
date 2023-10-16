@@ -1,0 +1,29 @@
+name: Build Docsify Image
+
+on:
+  push:
+    branches:
+      - main
+      - doc/docsify
+    path:
+      - "docs/**"
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash
+    working-directory: docs
+jobs:
+  publish-docsify-docker-image:
+    runs-on: ubuntu-latest
+    name: Build and publish docker image
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/free-one-api.docs:latest .
+      - name: Publish image
+        run: |
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/free-one-api.docs:latest
