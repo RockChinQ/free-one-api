@@ -1,2 +1,2 @@
-* [中文文档](zh-CN/)
-* [English](en/)
+* [首页](/zh-CN/)
+* [适配器](/zh-CN/Adapters)
