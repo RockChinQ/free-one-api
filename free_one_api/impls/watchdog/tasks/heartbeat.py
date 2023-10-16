@@ -37,6 +37,7 @@ class HeartBeatTask(task.AbsTask):
                     if fail_count >= self.cfg["fail_limit"]:
                         try:
                             await self.channel.disable_channel(ch.id)
+                            ch.fail_count = 0
                             logging.info(f"Disabled channel {ch.id} due to heartbeat failed {fail_count} times")
                         except Exception:
                             logging.warn(f"Failed to disable channel {ch.id}, traceback: {traceback.format_exc()}")
