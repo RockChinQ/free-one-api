@@ -28,6 +28,24 @@ ChatGPT 官网逆向工程库
 
 5. 保存即可测试
 
+### 反向代理
+
+ChatGPT 需要通过反向代理才能绕过 Cloudflare 的限制，Free One API 项目默认使用开发者提供的代理地址 `https://chatproxy.rockchin.top/api/` ，但压力很大，强烈建议自行搭建反向代理。
+
+* 请根据此项目文档配置：<https://github.com/acheong08/ChatGPT-Proxy-V4>
+
+在`data/config.yaml`中修改`misc.chatgpt_api_base`为你的反向代理地址即可。
+也可以在创建 `acheong08/ChatGPT` 适配器时，直接在 `Config` 栏中输入
+
+```json
+{
+  "reverse_proxy": "你的反向代理地址"
+}
+```
+
+设置此适配器使用的反向代理地址。
+若未设置，将使用配置文件中的 `misc.chatgpt_api_base` 字段作为反向代理地址。
+
 ## KoushikNavuluri/Claude-API
 
 Anthropic Claude 官网逆向工程库
