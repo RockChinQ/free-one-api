@@ -38,7 +38,7 @@
 
 **添加渠道:**
 
-<img width="400" alt="image" src="assets/add_channel.png">
+<img width="400" alt="image" src="docs/zh-CN/assets/add_channel.png">
 
 **Curl:**
 

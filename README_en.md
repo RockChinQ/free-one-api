@@ -38,7 +38,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 
 **Add Channel:**
 
-<img width="400" alt="image" src="assets/add_channel.png">
+<img width="400" alt="image" src="docs/en/assets/add_channel.png">
 
 **Curl:**
 
