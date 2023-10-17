@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import traceback
 
 from ..models.database import db
 
@@ -17,9 +18,12 @@ class SQLiteHandler(logging.Handler):
         
     async def _consumer(self):
         while True:
-            record: logging.LogRecord = await self.queue.get()
-            await self.dbmgr.insert_log(record.created, record.getMessage())
-            self.queue.task_done()
+            try:
+                record: logging.LogRecord = await self.queue.get()
+                await self.dbmgr.insert_log(record.created, record.getMessage())
+                self.queue.task_done()
+            except Exception as e:
+                print(traceback.format_exc())
 
     def emit(self, record: logging.LogRecord):
         """Emit a record."""
