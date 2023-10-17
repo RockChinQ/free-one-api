@@ -4,6 +4,7 @@ import string
 import random
 import logging
 import typing
+import traceback
 
 import quart
 
@@ -110,7 +111,7 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                 record.success = False
                 
                 logging.warning("Exception should be processed by adapter but caught by forward manager:")
-                logging.error(e)
+                logging.error(traceback.format_exc())
             finally:
                 record.commit()
         
