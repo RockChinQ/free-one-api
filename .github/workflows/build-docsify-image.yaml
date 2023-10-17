@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - doc/docsify
-    path:
+    paths:
       - "docs/**"
   workflow_dispatch:
 defaults:
