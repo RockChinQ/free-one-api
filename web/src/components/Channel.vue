@@ -16,6 +16,7 @@ import { ElNotification } from 'element-plus'
 const channelList = ref([]);
 
 const loading = ref(false);
+const scheduling = ref(false);
 
 function refreshChannelList() {
     loading.value = true;
@@ -163,9 +164,20 @@ function testChannelLatancy(channel_id) {
 }
 
 function testAllChannelLatancy() {
+    var interval = 750;
+
+    scheduling.value = true;
     for (let i = 0; i < channelList.value.length; i++) {
-        testChannelLatancy(channelList.value[i].id);
+
+        setTimeout(() => {
+            testChannelLatancy(channelList.value[i].id)
+        }, i*interval);
+
     }
+
+    setTimeout(() => {
+        scheduling.value = false;
+    }, channelList.value.length*interval);
 }
 
 function enableChannel(channel_id) {
@@ -448,7 +460,7 @@ function applyChannelDetails() {
         <div id="channel_operation_bar" :style="{ width: channelContainerWidth }">
             <el-button type="success" :icon="DocumentAdd" @click="showCreateChannelDialog">Add</el-button>
             <el-button type="success" v-loading="loading" element-loading-svg-view-box="-25, -25, 100, 100" :icon="Refresh" @click="refreshChannelList">Refresh</el-button>
-            <el-button type="success" :icon="Timer" @click="testAllChannelLatancy">Test All</el-button>
+            <el-button type="success" v-loading="scheduling" element-loading-svg-view-box="-25, -25, 100, 100" :icon="Timer" @click="testAllChannelLatancy">Test All</el-button>
         </div>
         <div id="channel_list_container" :style="{ width: channelContainerWidth }">
             <div class="chan">
