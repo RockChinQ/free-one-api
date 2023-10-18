@@ -293,6 +293,28 @@ class WebAPIGroup(routergroup.APIGroup):
                     "code": 1,
                     "message": str(e),
                 })
+                
+        @self.api("/log/delete", ["DELETE"], auth=True)
+        async def delete_logs():
+            try:
+                data = quart.request.args
+                
+                start = int(data.get("start", 0))
+                end = int(data.get("end", 0))
+                
+                await self.dbmgr.delete_logs(start, end)
+                
+                return quart.jsonify({
+                    "code": 0,
+                    "message": "ok",
+                })
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return quart.jsonify({
+                    "code": 1,
+                    "message": str(e),
+                })
         
         @self.api("/info/version", ["GET"], auth=False)
         async def info_version():

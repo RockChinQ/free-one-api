@@ -21,6 +21,8 @@
     - /log
         - GET /list
             - page:int capacity:int
+        - DEL /delete
+            - start:int end:int
 
 ## Entities
 

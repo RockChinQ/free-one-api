@@ -159,3 +159,8 @@ class SQLiteDB(dbmod.DatabaseInterface):
                 row = await cursor.fetchone()
                 return row[0]
     
+    async def delete_logs(self, start: int, end: int) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("DELETE FROM log WHERE id >= ? AND id <= ?", (start, end))
+            await db.commit()
+    
