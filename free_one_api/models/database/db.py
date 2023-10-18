@@ -74,3 +74,13 @@ class DatabaseInterface(metaclass=abc.ABCMeta):
     async def get_logs_amount(self) -> int:
         """Get the amount of logs."""
         return
+
+    @abc.abstractmethod
+    async def delete_logs(self, start: int, end: int) -> None:
+        """Delete logs.
+        
+        Args:
+            start: start id
+            end: end id
+        """
+        return
