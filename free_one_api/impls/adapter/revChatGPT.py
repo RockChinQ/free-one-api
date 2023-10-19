@@ -45,7 +45,7 @@ class RevChatGPTAdapter(llm.LLMLibAdapter):
         return \
 """You can provide `access_token` or `email/password` to config as:
 {
-    "access_token": "your access token",
+    "access_token": "your access token"
 }
 or
 {
