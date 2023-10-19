@@ -48,6 +48,7 @@
 
 ## 文档
 
+✨先点个 Star 吧✨  
 部署、配置方式请参考文档：
 
 - GitHub Page: https://rockchinq.github.io/free-one-api

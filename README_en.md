@@ -48,6 +48,7 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 
 ## Documentation
 
+✨Star this repo plz✨  
 Please refer to the documentation for deployment and configuration:
 
 - GitHub Page: https://rockchinq.github.io/free-one-api
