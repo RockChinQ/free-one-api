@@ -9,6 +9,29 @@ docker run -d -p 3000:3000 --restart always --name free-one-api -v ~/free-one-ap
 此语句将启动 free-one-api 并指定 `~/free-one-api/data` 为容器的文件存储映射目录。  
 你可以在 `http://localhost:3000/` 打开管理页面。
 
+### Docker Compose 示例
+
+若安装了 Docker Compose，你可以使用以下示例来启动 free-one-api：
+
+```yaml
+version: '3'
+services:
+  free-one-api:
+    container_name: free-one-api
+    image: rockchin/free-one-api
+    ports:
+      - "3000:3000"
+    restart: always
+    volumes:
+      - ~/free-one-api/data:/app/data
+```
+
+保存为`docker-compose.yaml`，然后在该文件所在目录执行以下命令：
+
+```bash
+docker-compose up -d
+```
+
 ## 手动
 
 ```bash
