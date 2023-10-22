@@ -29,7 +29,7 @@ services:
 保存为`docker-compose.yaml`，然后在该文件所在目录执行以下命令：
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## 手动
