@@ -82,7 +82,19 @@ Please refer to https://github.com/acheong08/ChatGPT
     def supported_path(self) -> str:
         return "/v1/chat/completions"
     
-    chatbot: chatgpt.AsyncChatbot
+    cfg: dict = None
+    reverse_proxy: str = None
+    
+    _chatbot: chatgpt.AsyncChatbot = None
+    
+    @property
+    def chatbot(self) -> chatgpt.AsyncChatbot:
+        if self._chatbot is None:
+            self._chatbot = chatgpt.AsyncChatbot(
+                config=self.cfg,
+                base_url=self.reverse_proxy,
+            )
+        return self._chatbot
     
     def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
@@ -97,11 +109,9 @@ Please refer to https://github.com/acheong08/ChatGPT
             
             # delete reverse_proxy from config
             del config_copy['reverse_proxy']
-        
-        self.chatbot = chatgpt.AsyncChatbot(
-            config=config_copy,
-            base_url=reverse_proxy,
-        )
+            
+        self.cfg = config_copy
+        self.reverse_proxy = reverse_proxy
     
     async def test(self) -> (bool, str):
         conversation_id = ""
