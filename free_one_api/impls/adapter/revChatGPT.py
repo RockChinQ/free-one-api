@@ -104,9 +104,9 @@ Please refer to https://github.com/acheong08/ChatGPT
         )
     
     async def test(self) -> (bool, str):
+        conversation_id = ""
         try:
             prev_text = ""
-            conversation_id = ""
             self.chatbot.conversation_id = None
             async for data in self.chatbot.ask(
                 "Hi, respond 'Hello, world!' please.",
@@ -118,9 +118,14 @@ Please refer to https://github.com/acheong08/ChatGPT
             await self.chatbot.delete_conversation(conversation_id)
             return True, ""
         except Exception as e:
+            if conversation_id != "":
+                try:
+                    await self.chatbot.delete_conversation(conversation_id)
+                except:
+                    pass
             traceback.print_exc()
             return False, str(e)
-    
+
     async def query(self, req: request.Request) -> typing.AsyncGenerator[response.Response, None]:        
         new_messages = []
         for i in range(len(req.messages)):
