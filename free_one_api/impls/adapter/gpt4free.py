@@ -6,6 +6,8 @@ import random
 
 import g4f
 
+g4f.version_check = False
+
 from free_one_api.entities import request, response
 
 from ...models import adapter
