@@ -4,9 +4,30 @@ import uuid
 import logging
 import random
 
+import pkg_resources
+
+using_g4f_version = pkg_resources.get_distribution("g4f").version
+
+class FakeResponse:
+
+    def json(self):
+        return {
+            "info": {
+                "version": using_g4f_version
+            }
+        }
+
+def repl(*args, **kwargs):
+    return FakeResponse()
+
+import requests
+
+old_get = requests.get
+requests.get = repl
+
 import g4f
 
-g4f.version_check = False
+requests.get = old_get
 
 from free_one_api.entities import request, response
 
