@@ -109,7 +109,8 @@ Please refer to https://github.com/xtekky/gpt4free
 
         exclude = [
             'Acytoo',
-            'BaseProvider'
+            'BaseProvider',
+            'Bing'
         ]
 
         for provider in providers:
