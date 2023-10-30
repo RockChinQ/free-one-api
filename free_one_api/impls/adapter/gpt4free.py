@@ -134,7 +134,8 @@ Please refer to https://github.com/xtekky/gpt4free
             'Acytoo',
             'BaseProvider',
             'Bing',
-            'ChatBase'
+            'ChatBase',
+            'ChatgptDemo',
         ]
 
         for provider in providers:
