@@ -104,7 +104,9 @@ Please refer to https://github.com/xtekky/gpt4free
                     ],
                     provider=self._use_provider
                 )
-                non_stream_tested = True
+
+                if 'Rock' in resp and '<' not in resp:
+                    non_stream_tested = True
             except Exception as e:
                 self._use_provider = None
         if non_stream_tested and self._use_stream_provider is not None:
@@ -157,6 +159,8 @@ Please refer to https://github.com/xtekky/gpt4free
                     ],
                     provider=provider
                 )
+
+                logging.debug("Testing provider %s, resp %s", provider, resp)
 
                 if 'Rock' in resp and '<' not in resp:
                     if self._use_provider is None:
