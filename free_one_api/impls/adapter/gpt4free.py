@@ -131,7 +131,8 @@ Please refer to https://github.com/xtekky/gpt4free
         exclude = [
             'Acytoo',
             'BaseProvider',
-            'Bing'
+            'Bing',
+            'ChatBase'
         ]
 
         for provider in providers:
