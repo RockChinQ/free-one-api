@@ -4,7 +4,7 @@
 
 |Adapter|Multi Round|Stream|Function Call|Status|Comment|
 |---|---|---|---|---|---|
-|[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|ChatGPT Web Version|
+|[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|❌|ChatGPT Web Version|
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|Claude Web Version|
 |[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|Google Bard Web Version|
 |[xtekky/gpt4free](https://github.com/xtekky/gpt4free)|✅|✅|❌|✅|gpt4free cracked multiple platforms|
