@@ -55,12 +55,17 @@ Method of getting cookie string, please refer to https://github.com/KoushikNavul
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
     
-    chatbot: claude.Client
+    _chatbot: claude.Client = None
+
+    @property
+    def chatbot(self) -> claude.Client:
+        if self._chatbot is None:
+            self._chatbot = claude.Client(self.config["cookie"])
+        return self._chatbot
     
     def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
         self.eval = eval
-        self.chatbot = claude.Client(self.config["cookie"])
         
     async def test(self) -> (bool, str):
         try:
