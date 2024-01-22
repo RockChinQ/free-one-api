@@ -1,5 +1,8 @@
 # Free One API Documentation
 
+> **NOTE**  
+> Some of the content in this document is translated by GPT (GitHub Copilot).
+
 ## Supported LLM libs
 
 |Adapter|Multi Round|Stream|Function Call|Status|Comment|
