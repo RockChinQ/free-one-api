@@ -4,7 +4,7 @@
 
 |Adapter|Multi Round|Stream|Function Call|Status|Comment|
 |---|---|---|---|---|---|
-|[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|❌|ChatGPT 网页版|
+|[acheong08/ChatGPT](https://github.com/acheong08/ChatGPT)|✅|✅|❌|✅|ChatGPT 网页版|
 |[KoushikNavuluri/Claude-API](https://github.com/KoushikNavuluri/Claude-API)|✅|❌|❌|✅|Claude 网页版|
 |[dsdanielpark/Bard-API](https://github.com/dsdanielpark/Bard-API)|✅|❌|❌|✅|Google Bard 网页版|
 |[xtekky/gpt4free](https://github.com/xtekky/gpt4free)|✅|✅|❌|✅|gpt4free 接入多个平台的破解|
