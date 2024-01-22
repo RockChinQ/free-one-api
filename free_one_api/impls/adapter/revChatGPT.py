@@ -15,8 +15,6 @@ from ...models.channel import evaluation
 @adapter.llm_adapter
 class RevChatGPTAdapter(llm.LLMLibAdapter):
     
-    CHATGPT_API_BASE = "https://chatproxy.rockchin.top/api/"
-    
     @classmethod
     def name(cls) -> str:
         return "acheong08/ChatGPT"
@@ -83,8 +81,9 @@ Please refer to https://github.com/acheong08/ChatGPT
         return "/v1/chat/completions"
     
     cfg: dict = None
-    reverse_proxy: str = None
-    
+    reverse_proxy: str = "https://chatproxy.rockchin.top/api/"
+    auto_ignore_duplicated: bool = True
+
     _chatbot: chatgpt.AsyncChatbot = None
     
     @property
@@ -100,9 +99,9 @@ Please refer to https://github.com/acheong08/ChatGPT
         self.config = config
         self.eval = eval
         
-        reverse_proxy = RevChatGPTAdapter.CHATGPT_API_BASE
-        
         config_copy = config.copy()
+
+        reverse_proxy = RevChatGPTAdapter.reverse_proxy
         
         if 'reverse_proxy' in config_copy:
             reverse_proxy = config_copy['reverse_proxy']

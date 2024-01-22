@@ -108,8 +108,11 @@ default_config = {
             " (This response is sponsored by Free One API. Consider star the project on GitHub: https://github.com/RockChinQ/free-one-api )",
         ]
     },
-    "misc": {
-        "chatgpt_api_base": "https://chatproxy.rockchin.top/api/",
+    "adapters": {
+        "acheong08_ChatGPT": {
+            "reverse_proxy": "https://chatproxy.rockchin.top/api/",
+            "auto_ignore_duplicated": True,
+        }
     }
 }
 
@@ -131,11 +134,6 @@ async def make_application(config_path: str) -> Application:
     # dump config
     with open(config_path, "w") as f:
         yaml.dump(config, f)
-        
-    # set default values
-    from .adapter import revChatGPT
-    
-    revChatGPT.RevChatGPTAdapter.CHATGPT_API_BASE = config['misc']['chatgpt_api_base']
 
     # logging
     logging_level = logging.INFO
@@ -163,7 +161,7 @@ async def make_application(config_path: str) -> Application:
         logging.getLogger().removeHandler(handler)
     
     logging.getLogger().addHandler(terminal_out)
-    
+
     # save ad to runtime
     if 'random_ad' in config and config['random_ad']['enabled']:
         from ..common import randomad
@@ -192,6 +190,27 @@ async def make_application(config_path: str) -> Application:
     dblogger.setFormatter(logging.Formatter("[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s"))
     
     logging.getLogger().addHandler(dblogger)
+
+    # set default values
+    # apply adapters config
+    if 'misc' in config and 'chatgpt_api_base' in config['misc']:  # backward compatibility
+        config['adapters']['acheong08_ChatGPT']['reverse_proxy'] = config['misc']['chatgpt_api_base']
+    
+    adapter_config_mapping = {
+        "acheong08_ChatGPT": revChatGPT.RevChatGPTAdapter,
+        "KoushikNavuluri_Claude-API": claude.ClaudeAdapter,
+        "dsdanielpark_Bard-API": bard.BardAdapter,
+        "xtekky_gpt4free": gpt4free.GPT4FreeAdapter,
+        "Soulter_hugging-chat-api": hugchat.HuggingChatAdapter,
+        "xw5xr6_revTongYi": qianwen.QianWenAdapter,
+    }
+
+    for adapter_name in adapter_config_mapping:
+        if adapter_name not in config['adapters']:
+            config['adapters'][adapter_name] = {}
+
+        for k, v in config["adapters"][adapter_name].items():
+            setattr(adapter_config_mapping[adapter_name], k, v)
     
     # make channel manager
     from .channel import mgr as chanmgr
