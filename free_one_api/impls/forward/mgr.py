@@ -58,6 +58,8 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                         continue
                     
                     record.resp_message_length += len(resp.normal_message)
+
+                    logging.debug("resp: {}".format(resp))
                     
                     yield "data: {}\n\n".format(json.dumps({
                         "id": "chatcmpl-"+resp_id,
@@ -173,6 +175,9 @@ class ForwardManager(forwardmgr.AbsForwardManager):
                     resp_tmp = resp
                     normal_message += resp.normal_message
                     record.resp_message_length += len(resp.normal_message)
+            
+            logging.debug("resp: {}".format(resp))
+            logging.debug("normal_message: {}".format(normal_message))
 
             if randomad.enabled:
                 for word in randomad.generate_ad():
