@@ -15,8 +15,6 @@ from ...models.channel import evaluation
 @adapter.llm_adapter
 class RevChatGPTAdapter(llm.LLMLibAdapter):
     
-    CHATGPT_API_BASE = "https://chatproxy.rockchin.top/api/"
-    
     @classmethod
     def name(cls) -> str:
         return "acheong08/ChatGPT"
@@ -83,8 +81,9 @@ Please refer to https://github.com/acheong08/ChatGPT
         return "/v1/chat/completions"
     
     cfg: dict = None
-    reverse_proxy: str = None
-    
+    reverse_proxy: str = "https://chatproxy.rockchin.top/api/"
+    auto_ignore_duplicated: bool = True
+
     _chatbot: chatgpt.AsyncChatbot = None
     
     @property
@@ -100,9 +99,10 @@ Please refer to https://github.com/acheong08/ChatGPT
         self.config = config
         self.eval = eval
         
-        reverse_proxy = RevChatGPTAdapter.CHATGPT_API_BASE
-        
         config_copy = config.copy()
+
+        reverse_proxy = RevChatGPTAdapter.reverse_proxy
+        auto_ignore_duplicated = RevChatGPTAdapter.auto_ignore_duplicated
         
         if 'reverse_proxy' in config_copy:
             reverse_proxy = config_copy['reverse_proxy']
@@ -110,8 +110,13 @@ Please refer to https://github.com/acheong08/ChatGPT
             # delete reverse_proxy from config
             del config_copy['reverse_proxy']
             
+        if 'auto_ignore_duplicated' in config_copy:
+            self.auto_ignore_duplicated = config_copy['auto_ignore_duplicated']
+            del config_copy['auto_ignore_duplicated']
+
         self.cfg = config_copy
         self.reverse_proxy = reverse_proxy
+        self.auto_ignore_duplicated = auto_ignore_duplicated
     
     async def test(self) -> (bool, str):
         conversation_id = ""
@@ -138,7 +143,13 @@ Please refer to https://github.com/acheong08/ChatGPT
 
     async def query(self, req: request.Request) -> typing.AsyncGenerator[response.Response, None]:        
         new_messages = []
+
+        assistant_messages: list[str] = []
+
         for i in range(len(req.messages)):
+            if req.messages[i]['role'] == "assistant":
+                assistant_messages.append(req.messages[i]['content'])
+
             new_messages.append({
                 "id": str(uuid.uuid4()),
                 "author": {"role": req.messages[i]['role']},
@@ -164,6 +175,15 @@ Please refer to https://github.com/acheong08/ChatGPT
                 prev_text = data["message"]
                 conversation_id = data["conversation_id"]
                 
+                # skip if:
+                # 1. more than two spaces contained in the message
+                # and 2. message in any elements of the assistant messages
+                # and 3. auto_ignore_duplicated is True
+                if message.count(" ") >= 2 and \
+                    any([message in msg for msg in assistant_messages]) and \
+                    self.auto_ignore_duplicated:
+                    continue
+
                 yield response.Response(
                     id=random_int,
                     finish_reason=response.FinishReason.NULL,

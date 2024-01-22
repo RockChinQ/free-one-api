@@ -32,9 +32,11 @@ ChatGPT 官网逆向工程库
 
 ChatGPT 需要通过反向代理才能绕过 Cloudflare 的限制，Free One API 项目默认使用开发者提供的代理地址 `https://chatproxy.rockchin.top/api/` ，但压力很大，强烈建议自行搭建反向代理。
 
-* 请根据此项目文档配置：<https://github.com/acheong08/ChatGPT-Proxy-V4>
+* 可以根据以下项目搭建，若均不可用，请自行寻找其他反代:
+  - https://github.com/flyingpot/chatgpt-proxy （推荐）
+  - https://github.com/acheong08/ChatGPT-Proxy-V4 （不可用）
 
-在`data/config.yaml`中修改`misc.chatgpt_api_base`为你的反向代理地址即可。
+在`data/config.yaml`中修改`adapters.acheong08_ChatGPT.reverse_proxy`为你的反向代理地址即可。
 也可以在创建 `acheong08/ChatGPT` 适配器时，直接在 `Config` 栏中输入
 
 ```json
@@ -44,7 +46,9 @@ ChatGPT 需要通过反向代理才能绕过 Cloudflare 的限制，Free One API
 ```
 
 设置此适配器使用的反向代理地址。
-若未设置，将使用配置文件中的 `misc.chatgpt_api_base` 字段作为反向代理地址。
+
+> **WARNING**  
+> 目前使用的反代可能存在[重复回复前文的情况](https://github.com/RockChinQ/free-one-api/issues/75)，`free-one-api` 会自动删除重复内容，若出现意想不到的情况，请设置`adapters.acheong08_ChatGPT.auto_ignore_duplicated`为`false` 以禁用此功能。
 
 ## KoushikNavuluri/Claude-API
 

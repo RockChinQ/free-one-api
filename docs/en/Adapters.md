@@ -32,10 +32,12 @@ ChatGPT official website reverse engineering library
 
 ChatGPT needs to use a reverse proxy to bypass Cloudflare's restrictions. The Free One API project defaults to the proxy address provided by the developer `https://chatproxy.rockchin.top/api/`, but the pressure is very high. It is strongly recommended to build a reverse proxy by yourself.
 
-* Please configure according to this project document: <https://github.com/acheong08/ChatGPT-Proxy-V4>
+* You can build it using the following projects, if they are all unavailable, please find other reverse proxies by yourself:
+  - https://github.com/flyingpot/chatgpt-proxy (Recommended)
+  - https://github.com/acheong08/ChatGPT-Proxy-V4 (Unavailable)
 
-Edit `misc.chatgpt_api_base` to your reverse proxy address in `data/config.yaml`.
-You can also enter directly in the `Config` column when creating the `acheong08/ChatGPT` adapter
+Modify `adapters.acheong08_ChatGPT.reverse_proxy` to your reverse proxy address in `data/config.yaml`.
+You can also directly enter in the `Config` column when creating the `acheong08/ChatGPT` adapter
 
 ```json
 {
@@ -43,7 +45,10 @@ You can also enter directly in the `Config` column when creating the `acheong08/
 }
 ```
 
-If not set, the `misc.chatgpt_api_base` field in the configuration file will be used as the reverse proxy address.
+Set the reverse proxy address used by this adapter.
+
+> **WARNING**  
+> The current reverse proxy may have [the situation of repeating the previous text](https://github.com/RockChinQ/free-one-api/issues/75)(CN), `free-one-api` will automatically delete duplicate content. If unexpected situations occur, please set `adapters.acheong08_ChatGPT.auto_ignore_duplicated` to `false` to disable this feature.
 
 ## KoushikNavuluri/Claude-API
 
