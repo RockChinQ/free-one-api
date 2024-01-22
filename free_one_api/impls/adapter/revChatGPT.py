@@ -102,6 +102,7 @@ Please refer to https://github.com/acheong08/ChatGPT
         config_copy = config.copy()
 
         reverse_proxy = RevChatGPTAdapter.reverse_proxy
+        auto_ignore_duplicated = RevChatGPTAdapter.auto_ignore_duplicated
         
         if 'reverse_proxy' in config_copy:
             reverse_proxy = config_copy['reverse_proxy']
@@ -109,8 +110,13 @@ Please refer to https://github.com/acheong08/ChatGPT
             # delete reverse_proxy from config
             del config_copy['reverse_proxy']
             
+        if 'auto_ignore_duplicated' in config_copy:
+            self.auto_ignore_duplicated = config_copy['auto_ignore_duplicated']
+            del config_copy['auto_ignore_duplicated']
+
         self.cfg = config_copy
         self.reverse_proxy = reverse_proxy
+        self.auto_ignore_duplicated = auto_ignore_duplicated
     
     async def test(self) -> (bool, str):
         conversation_id = ""
@@ -172,8 +178,10 @@ Please refer to https://github.com/acheong08/ChatGPT
                 # skip if:
                 # 1. more than two spaces contained in the message
                 # and 2. message in any elements of the assistant messages
+                # and 3. auto_ignore_duplicated is True
                 if message.count(" ") >= 2 and \
-                    any([message in msg for msg in assistant_messages]):
+                    any([message in msg for msg in assistant_messages]) and \
+                    self.auto_ignore_duplicated:
                     continue
 
                 yield response.Response(
