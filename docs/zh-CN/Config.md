@@ -3,17 +3,22 @@
 配置文件位于`data/config.yaml`
 
 ```yaml
+# 每个适配器的全局配置
+adapters:
+  acheong08_ChatGPT:
+    # 是否自动忽略重复的响应 see: https://github.com/RockChinQ/free-one-api/issues/75
+    auto_ignore_duplicated: false
+    # acheong08/ChatGPT 适配器的反向代理地址
+    # 默认的公共反代可能不稳定，建议自行搭建，若下方项目均不可用，请自行寻找其他反代:
+    # https://github.com/flyingpot/chatgpt-proxy （推荐）
+    # https://github.com/acheong08/ChatGPT-Proxy-V4 （不可用）
+    reverse_proxy: https://chatproxy.rockchin.top/api/
 database:
   # SQLite 数据库文件路径
   path: ./data/free_one_api.db
   type: sqlite
 logging:
   debug: false  # 是否开启调试日志
-misc:
-  # acheong08/ChatGPT 适配器的反向代理路径
-  # 默认的公共反代可能不稳定，建议自行搭建:
-  # https://github.com/acheong08/ChatGPT-Proxy-V4
-  chatgpt_api_base: https://chatproxy.rockchin.top/api/
 # 随机广告
 # 会随机追加到每个响应的末尾
 random_ad:
