@@ -138,7 +138,13 @@ Please refer to https://github.com/acheong08/ChatGPT
 
     async def query(self, req: request.Request) -> typing.AsyncGenerator[response.Response, None]:        
         new_messages = []
+
+        assistant_messages: list[str] = []
+
         for i in range(len(req.messages)):
+            if req.messages[i]['role'] == "assistant":
+                assistant_messages.append(req.messages[i]['content'])
+
             new_messages.append({
                 "id": str(uuid.uuid4()),
                 "author": {"role": req.messages[i]['role']},
@@ -164,6 +170,13 @@ Please refer to https://github.com/acheong08/ChatGPT
                 prev_text = data["message"]
                 conversation_id = data["conversation_id"]
                 
+                # skip if:
+                # 1. more than two spaces contained in the message
+                # and 2. message in any elements of the assistant messages
+                if message.count(" ") >= 2 and \
+                    any([message in msg for msg in assistant_messages]):
+                    continue
+
                 yield response.Response(
                     id=random_int,
                     finish_reason=response.FinishReason.NULL,
