@@ -78,6 +78,7 @@ const adapter_color = {
     "xtekky/gpt4free": "#CC33FF",
     "acheong08/EdgeGPT": "#0388FF",
     "Soulter/hugging-chat-api": "#FFBB03",
+    "xw5xr6/revTongYi": "#4040C0",
 }
 
 function deleteChannelConfirmed(channel_id) {
