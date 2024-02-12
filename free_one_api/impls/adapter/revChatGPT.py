@@ -2,6 +2,7 @@ import typing
 import traceback
 import uuid
 import random
+import logging
 
 import revChatGPT.V1 as chatgpt
 
@@ -161,6 +162,8 @@ Please refer to https://github.com/acheong08/ChatGPT
                 }
             })
         
+        logging.debug(f'assistant_messages: {assistant_messages}')
+        
         random_int = random.randint(0, 1000000000)
         
         prev_text = ""
@@ -172,17 +175,19 @@ Please refer to https://github.com/acheong08/ChatGPT
                 messages=new_messages,
             ):
                 message = data["message"][len(prev_text):]
-                prev_text = data["message"]
-                conversation_id = data["conversation_id"]
+                
+                if not message:
+                    continue
                 
                 # skip if:
-                # 1. more than two spaces contained in the message
-                # and 2. message in any elements of the assistant messages
-                # and 3. auto_ignore_duplicated is True
-                if message.count(" ") >= 2 and \
-                    any([message in msg for msg in assistant_messages]) and \
+                # 1. message in any elements of the income assistant messages
+                # and 2. auto_ignore_duplicated is True
+                if any([message == msg for msg in assistant_messages]) and \
                     self.auto_ignore_duplicated:
                     continue
+                
+                prev_text = data["message"] if prev_text in data["message"] else prev_text
+                conversation_id = data["conversation_id"]
 
                 yield response.Response(
                     id=random_int,
