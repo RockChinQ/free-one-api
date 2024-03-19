@@ -20,6 +20,8 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 
 > If you want to access the **official API(paid)** of each LLM through the OpenAI standard API, you can use [songquanpeng/one-api](https://github.com/songquanpeng/one-api), `free-one-api` can also be used with the `one-api` project.
 
+> Need contributors! There are too many adapters, and they are very unstable. I can't handle it alone. I hope you can help test various adapters, find new reverse engineering libraries, and submit PRs.
+
 ## Features
 
 - Automatically load balance.

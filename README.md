@@ -20,6 +20,8 @@
 
 > 欲通过 OpenAI 标准 API 访问各个 LLM 的**官方接口(付费)**，可以使用 [songquanpeng/one-api](https://github.com/songquanpeng/one-api)，`free-one-api` 亦可与 `one-api` 项目搭配使用。
 
+> 需要贡献者！适配器太多了，而且又很不稳定，自己一个人忙不过来。希望各位能帮助测试各个适配器，寻找新的逆向工程库，提交 PR。
+
 ## 功能点
 
 - 支持自动负载均衡。
