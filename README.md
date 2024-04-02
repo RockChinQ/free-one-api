@@ -55,3 +55,6 @@
 
 - GitHub Page: https://rockchinq.github.io/free-one-api
 - 自部署文档：https://free-one-api.rockchin.top
+
+## 法律问题
+#### 别问，问就是老佛爷付过钱了
