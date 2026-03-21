@@ -1,9 +1,10 @@
+import asyncio
 import typing
 import traceback
 import uuid
 import random
 
-import revTongYi.qianwen as qwen
+import revTianGong.tiangong as tiangong
 
 from free_one_api.entities import request, response
 
@@ -14,15 +15,15 @@ from ...models.channel import evaluation
 
 
 @adapter.llm_adapter
-class QianWenAdapter(llm.LLMLibAdapter):
+class TianGongAdapter(llm.LLMLibAdapter):
 
     @classmethod
     def name(cls) -> str:
-        return "xw5xr6/revTongYi"
+        return "DrTang/revTiangong"
 
     @classmethod
     def description(self) -> str:
-        return "Use leeeduke/revTongYi to access Aliyun TongYi QianWen."
+        return "suck my dick"
 
     def supported_models(self) -> list[str]:
         return [
@@ -56,37 +57,32 @@ class QianWenAdapter(llm.LLMLibAdapter):
     @classmethod
     def config_comment(cls) -> str:
         return \
-            """RevTongYi use cookies that can be extracted from https://qianwen.aliyun.com/
+            """
             You should provide cookie string as `cookie` in config:
             {
                 "cookie": "your cookie string"
             }
-            
-            Method of getting cookie string, please refer to https://github.com/leeeduke/revTongYi
+
             """
 
     @classmethod
     def supported_path(cls) -> str:
         return "/v1/chat/completions"
 
-    chatbot: qwen.Chatbot
+    chatbot: tiangong.Chatbot
 
     def __init__(self, config: dict, eval: evaluation.AbsChannelEvaluation):
         self.config = config
         self.eval = eval
-        self.chatbot = qwen.Chatbot(
+        self.chatbot = tiangong.Chatbot(
             cookies_str=config['cookie']
         )
 
     async def test(self) -> typing.Union[bool, str]:
         try:
-            # self.chatbot.create_session("Hello, reply 'hi' only.")
-            self.chatbot.sessionId = ""
-            resp = self.chatbot.ask(
-                "Hello, reply 'hi' only."
+            resp =await self.chatbot.ask(
+                prompt="Hello, reply 'hi' only."
             )
-            print(resp)
-            self.chatbot.delete_session(resp['sessionId'])
 
             return True, ""
         except Exception as e:
@@ -103,35 +99,13 @@ class QianWenAdapter(llm.LLMLibAdapter):
 
         random_int = random.randint(0, 1000000000)
 
-        prev_text = ""
-
-        sessionId = ""
-
-        self.chatbot.sessionId = ""
-
-        for resp in self.chatbot.ask(
-                prompt=prompt,
-                # sessionId="",
-                stream=True,
-        ):
-            if resp['contents'] == None or len(resp['contents']) == 0:
-                continue
-
-            sessionId = resp['sessionId']
-
-            yield response.Response(
-                id=random_int,
-                finish_reason=response.FinishReason.NULL,
-                normal_message=resp['contents'][0]['content'].replace(prev_text, ""),
-                function_call=None
-            )
-            prev_text = resp['contents'][0]['content']
-
-        self.chatbot.delete_session(sessionId)
+        resp =await (self.chatbot.ask(
+            prompt=prompt,
+        ))
 
         yield response.Response(
             id=random_int,
-            finish_reason=response.FinishReason.STOP,
-            normal_message="",
+            finish_reason=response.FinishReason.NULL,
+            normal_message=resp['texts'],
             function_call=None
         )

@@ -15,7 +15,7 @@ from ...models.channel import evaluation
 
 @adapter.llm_adapter
 class ReGPTAdapter(llm.LLMLibAdapter):
-    
+
     @classmethod
     def name(cls) -> str:
         return "Zai-Kun/reverse-engineered-chatgpt"
@@ -23,7 +23,7 @@ class ReGPTAdapter(llm.LLMLibAdapter):
     @classmethod
     def description(self) -> str:
         return "Use Zai-Kun/reverse-engineered-chatgpt to access reverse engineering OpenAI ChatGPT web edition."
-    
+
     def supported_models(self) -> list[str]:
         return [
             "gpt-3.5-turbo",
@@ -32,13 +32,13 @@ class ReGPTAdapter(llm.LLMLibAdapter):
 
     def function_call_supported(self) -> bool:
         return False
-    
+
     def stream_mode_supported(self) -> bool:
         return True
 
     def multi_round_supported(self) -> bool:
         return True
-    
+
     @classmethod
     def config_comment(cls) -> str:
         return \
@@ -87,10 +87,10 @@ Session token can be found from the cookies named `__Secure-next-auth.session-to
         req: request.Request
     ) -> typing.AsyncGenerator[response.Response, None]:
         prompt = ""
-        
+
         for msg in req.messages:
             prompt += f"{msg['role']}: {msg['content']}\n"
-        
+
         prompt += "assistant: "
 
         random_int = random.randint(0, 1000000)

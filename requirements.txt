@@ -10,3 +10,5 @@ g4f
 revTongYi
 colorlog
 git+https://github.com/Zai-Kun/reverse-engineered-chatgpt
+git+https://github.com/dd123-a/revTiangong.git
+git+https://github.com/dd123-a/revkimi.git

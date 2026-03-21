@@ -22,6 +22,8 @@ from .adapter import bard
 from .adapter import gpt4free
 from .adapter import hugchat
 from .adapter import qianwen
+from .adapter import tiangong
+from .adapter import kimi
 from .adapter import re_gpt
 
 from . import log
@@ -39,22 +41,22 @@ class Application:
 
     channel: chanmgr.AbsChannelManager
     """Channel manager."""
-    
+
     key: keymgr.AbsAPIKeyManager
     """API Key manager."""
-    
+
     watchdog: wdmgr.AbsWatchDog
-    
+
     logging_level: int = logging.INFO
-    
+
     def __init__(
-        self,
-        dbmgr: db.DatabaseInterface,
-        router: routermgr.RouterManager,
-        channel: chanmgr.AbsChannelManager,
-        key: keymgr.AbsAPIKeyManager,
-        watchdog: wdmgr.AbsWatchDog,
-        logging_level: int = logging.INFO,
+            self,
+            dbmgr: db.DatabaseInterface,
+            router: routermgr.RouterManager,
+            channel: chanmgr.AbsChannelManager,
+            key: keymgr.AbsAPIKeyManager,
+            watchdog: wdmgr.AbsWatchDog,
+            logging_level: int = logging.INFO,
     ):
         self.dbmgr = dbmgr
         self.router = router
@@ -62,14 +64,15 @@ class Application:
         self.key = key
         self.watchdog = watchdog
         self.logging_level = logging_level
-        
+
     async def run(self):
         """Run application."""
         loop = asyncio.get_running_loop()
-        
+
         loop.create_task(self.watchdog.run())
-        
+
         await self.router.serve(loop)
+
 
 log_colors_config = {
     'DEBUG': 'green',  # cyan white
@@ -117,6 +120,7 @@ default_config = {
     }
 }
 
+
 async def make_application(config_path: str) -> Application:
     """Make application."""
     if not os.path.exists(config_path):
@@ -131,72 +135,73 @@ async def make_application(config_path: str) -> Application:
 
     # complete config
     config = cfgutil.complete_config(config, default_config)
-    
+
     # dump config
     with open(config_path, "w") as f:
         yaml.dump(config, f)
 
     # logging
     logging_level = logging.INFO
-    
+
     if 'logging' in config and 'debug' in config['logging'] and config['logging']['debug']:
         logging_level = logging.DEBUG
-        
+
     if 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true':
         logging_level = logging.DEBUG
-    
+
     print("Logging level:", logging_level)
     logging.debug("Debug mode enabled.")
-    
+
     terminal_out = logging.StreamHandler()
-    
+
     terminal_out.setLevel(logging_level)
     terminal_out.setFormatter(colorlog.ColoredFormatter(
         "[%(asctime)s.%(msecs)03d] %(log_color)s%(pathname)s (%(lineno)d) - [%(levelname)s] :\n"
-            "%(message)s",
+        "%(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         log_colors=log_colors_config,
     ))
-    
+
     for handler in logging.getLogger().handlers:
         logging.getLogger().removeHandler(handler)
-    
+
     logging.getLogger().addHandler(terminal_out)
 
     # save ad to runtime
     if 'random_ad' in config and config['random_ad']['enabled']:
         from ..common import randomad
-        
+
         randomad.enabled = config['random_ad']['enabled']
         randomad.rate = config['random_ad']['rate']
         randomad.ads = config['random_ad']['ad_list']
-    
+
     from ..common import randomad
 
     # make database manager
     from .database import sqlite as sqlitedb
-    
+
     dbmgr_cls_mapping = {
         "sqlite": sqlitedb.SQLiteDB,
     }
-    
+
     dbmgr = dbmgr_cls_mapping[config['database']['type']](config['database'])
     await dbmgr.initialize()
-    
+
     # database handler
     dblogger = log.SQLiteHandler(dbmgr)
-    
+
     # failed to set debug level for db handler
     dblogger.setLevel(logging.INFO if logging_level <= logging.INFO else logging_level)
-    dblogger.setFormatter(logging.Formatter("[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s"))
-    
+    dblogger.setFormatter(
+        logging.Formatter("[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s"))
+
     logging.getLogger().addHandler(dblogger)
 
     # set default values
     # apply adapters config
     if 'misc' in config and 'chatgpt_api_base' in config['misc']:  # backward compatibility
         config['adapters']['acheong08_ChatGPT']['reverse_proxy'] = config['misc']['chatgpt_api_base']
-    
+
     adapter_config_mapping = {
         "acheong08_ChatGPT": revChatGPT.RevChatGPTAdapter,
         "KoushikNavuluri_Claude-API": claude.ClaudeAdapter,
@@ -204,6 +209,8 @@ async def make_application(config_path: str) -> Application:
         "xtekky_gpt4free": gpt4free.GPT4FreeAdapter,
         "Soulter_hugging-chat-api": hugchat.HuggingChatAdapter,
         "xw5xr6_revTongYi": qianwen.QianWenAdapter,
+        "DrTang": tiangong.tiangong,
+        "DrTang": kimi.KimiAdapter,
         "Zai-Kun_reverse-engineered-chatgpt": re_gpt.ReGPTAdapter,
     }
 
@@ -213,66 +220,66 @@ async def make_application(config_path: str) -> Application:
 
         for k, v in config["adapters"][adapter_name].items():
             setattr(adapter_config_mapping[adapter_name], k, v)
-    
+
     # make channel manager
     from .channel import mgr as chanmgr
-    
+
     channelmgr = chanmgr.ChannelManager(dbmgr)
     await channelmgr.load_channels()
-    
+
     # make key manager
     from .key import mgr as keymgr
-    
+
     apikeymgr = keymgr.APIKeyManager(dbmgr)
     await apikeymgr.list_keys()
-    
+
     # make forward manager
     from .forward import mgr as forwardmgr
-    
+
     fwdmgr = forwardmgr.ForwardManager(channelmgr, apikeymgr)
-    
+
     # make router manager
     from .router import mgr as routermgr
-    
+
     #   import all api groups
     from .router import forward as forwardgroup
     from .router import api as apigroup
     from .router import web as webgroup
-    
+
     # ========= API Groups =========
     group_forward = forwardgroup.ForwardAPIGroup(dbmgr, channelmgr, apikeymgr, fwdmgr)
     group_api = apigroup.WebAPIGroup(dbmgr, channelmgr, apikeymgr)
     group_api.tokens = [crypto.md5_digest(config['router']['token'])]
     group_web = webgroup.WebPageGroup(config['web'], config['router'])
-    
+
     paths = []
-    
+
     paths += group_forward.get_routers()
     paths += group_web.get_routers()
     paths += group_api.get_routers()
-    
+
     # ========= API Groups =========
-    
+
     routermgr = routermgr.RouterManager(
         routes=paths,
         config=config['router'],
     )
-    
+
     # watchdog and tasks
     from .watchdog import wd as watchdog
-    
+
     wdmgr = watchdog.WatchDog()
-    
+
     # tasks
     from .watchdog.tasks import heartbeat
-    
+
     hbtask = heartbeat.HeartBeatTask(
         channelmgr,
         config['watchdog']['heartbeat'],
     )
-    
+
     wdmgr.add_task(hbtask)
-    
+
     app = Application(
         dbmgr=dbmgr,
         router=routermgr,
@@ -281,8 +288,7 @@ async def make_application(config_path: str) -> Application:
         watchdog=wdmgr,
         logging_level=logging_level,
     )
-    
+
     logging.info("Application initialized.")
-    
+
     return app
-    
