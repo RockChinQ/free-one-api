@@ -3,6 +3,7 @@ import traceback
 import uuid
 import logging
 import random
+import re
 
 import pkg_resources
 
@@ -39,6 +40,14 @@ from ...models.channel import evaluation
 
 @adapter.llm_adapter
 class GPT4FreeAdapter(llm.LLMLibAdapter):
+    _response_prefix_pattern = re.compile(r"\$@\$v=[^$]+\$@\$")
+
+    @classmethod
+    def _filter_response_text(cls, text: str) -> str:
+        if not isinstance(text, str):
+            return text
+        return cls._response_prefix_pattern.sub("", text)
+
     
     @classmethod
     def name(cls) -> str:
@@ -238,7 +247,7 @@ Please refer to https://github.com/xtekky/gpt4free
                 yield response.Response(
                     id=random_int,
                     finish_reason=response.FinishReason.NULL,
-                    normal_message=resp_text,
+                    normal_message=self._filter_response_text(resp_text),
                     function_call=None
                 )
             yield response.Response(
@@ -255,7 +264,7 @@ Please refer to https://github.com/xtekky/gpt4free
                 yield response.Response(
                     id=random_int,
                     finish_reason=response.FinishReason.NULL,
-                    normal_message=resp_text,
+                    normal_message=self._filter_response_text(resp_text),
                     function_call=None
                 )
             yield response.Response(
@@ -270,6 +279,6 @@ Please refer to https://github.com/xtekky/gpt4free
             yield response.Response(
                 id=random_int,
                 finish_reason=response.FinishReason.STOP,
-                normal_message=resp,
+                normal_message=self._filter_response_text(resp),
                 function_call=None
             )
