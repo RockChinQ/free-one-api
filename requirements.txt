@@ -3,10 +3,11 @@ aiosqlite
 PyYaml
 revChatGPT
 tiktoken
+setuptools<81
 claude-api
 bardapi
 hugchat
-g4f
+g4f==0.2.8.2
 revTongYi
 colorlog
-git+https://github.com/Zai-Kun/reverse-engineered-chatgpt
+re_gpt==4.0.0
