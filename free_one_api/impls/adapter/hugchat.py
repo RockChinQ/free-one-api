@@ -80,14 +80,13 @@ Please refer to https://github.com/Soulter/hugging-chat-api
     
     async def test(self) -> typing.Union[bool, str]:
         try:
-            self.chatbot.change_conversation(self.chatbot.new_conversation())
-            for data in self.chatbot.query(
+            conversation = self.chatbot.new_conversation(switch_to=True)
+            for data in self.chatbot.chat(
                 "Hi, respond 'Hello, world!' please.",
-                stream=True
             ):
                 pass
             
-            self.chatbot.delete_conversation(self.chatbot.current_conversation)
+            self.chatbot.delete_conversation(conversation)
             
             return True, ""
         except Exception as e:
@@ -103,11 +102,10 @@ Please refer to https://github.com/Soulter/hugging-chat-api
         prompt += "assistant: "
         
         random_int = random.randint(0, 1000000000)
-        self.chatbot.change_conversation(self.chatbot.new_conversation())
+        conversation = self.chatbot.new_conversation(switch_to=True)
         
-        for resp in self.chatbot.query(
+        for resp in self.chatbot.chat(
             text=prompt,
-            stream=True
         ):
             yield response.Response(
                 id=random_int,
@@ -115,7 +113,7 @@ Please refer to https://github.com/Soulter/hugging-chat-api
                 normal_message=resp['token'],
                 function_call=None
             )
-        self.chatbot.delete_conversation(self.chatbot.current_conversation)
+        self.chatbot.delete_conversation(conversation)
 
         yield response.Response(
             id=random_int,
