@@ -66,4 +66,4 @@
 
 - [Telegram](https://t.me/+qpeq4Ev9FuI0YjVl)
 
--[Discord](https://discord.gg/W44yRcG5b) 
+- [Discord](https://discord.gg/W44yRcG5b) 
