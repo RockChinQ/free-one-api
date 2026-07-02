@@ -7,7 +7,7 @@ setuptools<81
 claude-api
 bardapi
 hugchat
-g4f==0.2.8.2
+g4f==7.7.1
 revTongYi
 colorlog
 re_gpt==4.0.0
