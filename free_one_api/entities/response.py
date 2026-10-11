@@ -25,9 +25,14 @@ class FunctionCall:
 
     arguments: dict
 
-    def __init__(self, function_name: str, arguments: dict):
+    # 上游(OpenAI 风格)返回的 tool_call id:原样交还客户端,
+    # 客户端用它以 role=tool + tool_call_id 回传执行结果。
+    id: str
+
+    def __init__(self, function_name: str, arguments: dict, id: str = None):
         self.function_name = function_name
         self.arguments = arguments
+        self.id = id
 
 
 class Response:

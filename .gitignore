@@ -163,3 +163,8 @@ data/
 test/*
 
 !test/automated/
+
+# DS_WebAgent 运行时数据(浏览器登录态、日志、sqlite),不入库
+ds_webagent-data/
+ds_web_agent/data/
+ds_web_agent/logs/

@@ -138,3 +138,72 @@ ChatGPT 官网逆向工程库，这个新一点。acheong08/ChatGPT 已经不维
   "session_token": "你的session token"
 }
 ```
+
+## ds-webagent/deepseek-web
+
+把本地运行的 DS_WebAgent 接成一个渠道。DS_WebAgent 是仓库里 ds_web_agent/ 目录下的 Rust 桥梁：它驱动一个真实的（有头）浏览器操作 chat.deepseek.com，对外暴露 OpenAI 兼容接口，因此不需要任何 cookie / session token，但需要你先在那个浏览器里手动登录一次 DeepSeek。
+
+### 部署方式
+
+用仓库根目录的 docker-compose.dswebagent.yaml 一起启动（推荐）：
+
+```bash
+docker compose -f docker-compose.dswebagent.yaml up -d --build
+```
+
+
+启动后：
+
+1. 打开 http://localhost:16080/vnc.html，在容器里的 Chromium 中手动登录 DeepSeek（登录态持久化在 ./ds_webagent-data/browser-profile，之后重启容器不用再登）；
+2. 打开 http://localhost:3000/ 进入本项目管理页（默认密码 12345678）；
+3. 「添加渠道」→ 适配器选 ds-webagent/deepseek-web → 保存 → 点测试。
+
+### 配置方式
+
+```json
+{
+  "base_url": "http://ds-webagent:9178",
+  "api_token": "local-dev-token",
+  "default_model": "ds-web-search",
+  "timeout_secs": 900
+}
+```
+
+
+| 字段 | 说明 |
+|---|---|
+| base_url | DS_WebAgent 的地址。同一 compose 网络里用 http://ds-webagent:9178；非 Docker 部署时用 http://127.0.0.1:9178 |
+| api_token | 必须与 DS_WebAgent 的 [server].api_token 一致，否则 401 |
+| default_model | 客户端请求的模型名不在下面三个里时的兜底 |
+| timeout_secs | 单次请求超时（网页对话较慢，默认 900 秒） |
+
+### 模型名
+
+DS_WebAgent 只认三个模型 ID，对应网页上「联网搜索 / 深度思考」两个开关的组合：
+
+| model id | 联网搜索 | 深度思考 |
+|---|---|---|
+| ds-web-search | 开 | 关 |
+| ds-web-think | 关 | 开 |
+| ds-web-search-think | 开 | 开 |
+
+客户端传别的模型名（如 gpt-4o）会落到 default_model，不会报错。
+
+### 工具调用（已支持）
+
+请求里的 `tools` / `tool_choice` 会原样转发给 DS_WebAgent；模型要调工具时，本渠道返回
+`finish_reason: "tool_calls"` 与 `message.tool_calls`，**工具由调用方执行**：
+
+1. 客户端执行完工具，把 `{"role":"tool","tool_call_id":"...","content":"..."}` 追加到 `messages` 再请求一次；
+2. 模型基于工具结果继续，最终返回 `finish_reason: "stop"` 与 `content`。
+
+DS_WebAgent 内部一次只承载一个工具调用，所以 `message.tool_calls` 数组长度为 1。
+
+### 配置热修改
+
+适配器每次请求都重新读取配置：在管理页改完渠道的 `Config` 并保存，下一次请求立即生效，不需要重启容器。
+
+### 已知限制
+
+- DS_WebAgent 内部串行（max_concurrent_requests = 1），并发请求会排队；心跳检测用的 /health 在 DeepSeek 未登录时返回 ready: false，渠道会被判为不可用，属正常现象。
+- 渠道的「测试」按钮只探测 DS_WebAgent 的 /health，不会真的发一次对话。

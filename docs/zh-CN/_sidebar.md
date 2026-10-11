@@ -2,5 +2,7 @@
 * [部署](/zh-CN/Setup)
 * [使用](/zh-CN/Usage)
 * [适配器](/zh-CN/Adapters)
+* [DS_WebAgent 接入](/zh-CN/DSWebAgent)
 * [配置文件](/zh-CN/Config)
-* [Demo测试](/zh-CN/Demo)
+* [Demo 测试](/zh-CN/Demo)
+* [常见问题](/zh-CN/FAQ)

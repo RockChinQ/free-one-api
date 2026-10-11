@@ -1,0 +1,49 @@
+# DS_WebAgent 的容器内配置。宿主机上的 config.toml 仍然用于本地开发。
+# 所有需要持久化的路径都指向 /data(挂载卷),容器重建不丢登录态与统计。
+#
+# 环境变量 DSWA_* 优先级高于本文件(见 README「环境变量覆盖」)。
+
+[server]
+# 容器里必须监听 0.0.0.0,否则同网络的 free-one-api 连不上
+host = "0.0.0.0"
+port = 9178
+# 必须与 free-one-api 渠道配置里的 api_token 一致
+api_token = "local-dev-token"
+max_concurrent_requests = 1
+request_timeout_secs = 900
+
+[browser]
+adapter = "chromiumoxide"
+chrome_executable = "/usr/bin/chromium"
+home_url = "https://chat.deepseek.com/"
+user_data_dir = "/data/browser-profile"
+# 硬性约束:必须是有头真实浏览器,容器里由 Xvfb 提供显示
+headless = false
+window_width = 1440
+window_height = 900
+locale = "zh-CN"
+# 容器内 Chromium 沙箱不可用,必须打开
+no_sandbox = true
+launch_timeout_secs = 60
+# /dev/shm 默认只有 64MB,Chromium 在容器里需要显式绕开
+# (compose 里也把 shm_size 调到了 1gb,双保险)
+extra_args = ["--disable-dev-shm-usage"]
+login_poll_secs = 3
+login_wait_secs = 0
+
+[storage]
+enabled = true
+dir = "/data/logs"
+log_file = "/data/logs/deeptoolbridge.log"
+screenshot_dir = "/data/logs/screenshots"
+jsonl_dir = "/data/logs/records"
+sqlite_path = "/data/dswa.db"
+record_http_bodies = true
+
+[logging]
+level = "info,ds_webagent=debug,chromiumoxide=warn,hyper=warn"
+ansi_in_file = false
+stdout = true
+
+[selectors]
+new_chat_button = ["text=New chat", "text=新对话", "div[class=new-chat]", "button[class=new-chat]", "[data-testid=new-chat]"]

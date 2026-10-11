@@ -138,3 +138,69 @@ ChatGPT official website reverse engineering library, this is newer. acheong08/C
   "session_token": "your session token"
 }
 ```
+
+## ds-webagent/deepseek-web
+
+Expose a locally running DS_WebAgent as a channel. DS_WebAgent is the Rust bridge in ds_web_agent/: it drives a real (headed) browser on chat.deepseek.com and exposes an OpenAI-compatible API, so no cookie or session token is needed — but you must log in to DeepSeek once in that browser.
+
+### Deployment
+
+Start it together with the bundled docker-compose.dswebagent.yaml (recommended):
+
+```bash
+docker compose -f docker-compose.dswebagent.yaml up -d --build
+```
+
+Then:
+
+1. Open http://localhost:16080/vnc.html and log in to DeepSeek in the Chromium inside the container (the login state persists in ./ds_webagent-data/browser-profile, so a restart does not require logging in again);
+2. Open http://localhost:3000/ for this project’s admin page (default password 12345678);
+3. Add channel -> Adapter: ds-webagent/deepseek-web -> Save -> Test.
+
+### Configuration
+
+```json
+{
+  "base_url": "http://ds-webagent:9178",
+  "api_token": "local-dev-token",
+  "default_model": "ds-web-search",
+  "timeout_secs": 900
+}
+```
+
+| Field | Meaning |
+|---|---|
+| base_url | DS_WebAgent address. Inside the compose network use http://ds-webagent:9178; running natively use http://127.0.0.1:9178 |
+| api_token | Must match DS_WebAgent’s [server].api_token, otherwise 401 |
+| default_model | Fallback when the client’s model name is not one of the three below |
+| timeout_secs | Per-request timeout (web-edition replies are slow; default 900s) |
+
+### Model names
+
+DS_WebAgent knows exactly three model IDs, mapping to the combinations of the web page’s “web search / deep think” toggles:
+
+| model id | Web search | Deep think |
+|---|---|---|
+| ds-web-search | on | off |
+| ds-web-think | off | on |
+| ds-web-search-think | on | on |
+
+An unknown model name (e.g. gpt-4o) falls back to default_model instead of erroring.
+
+### Tool calling (supported)
+
+The tools / tool_choice fields are forwarded to DS_WebAgent as-is; when the model wants a tool this channel returns finish_reason: "tool_calls" and message.tool_calls, and the caller executes the tool:
+
+1. Execute the tool, append {"role": "tool", "tool_call_id": "...", "content": "..."} to messages and request again;
+2. The model continues from the tool result and finally returns finish_reason: "stop" with content.
+
+DS_WebAgent carries one tool call per response, so message.tool_calls always has length 1.
+
+### Hot config changes
+
+The adapter re-reads its config on every request: edit the channel Config in the admin page and save; the next request uses it immediately, no container restart needed.
+
+### Known limits
+
+- DS_WebAgent is serial internally (max_concurrent_requests = 1), so concurrent requests queue; while DeepSeek is not logged in, /health returns ready: false and the channel is treated as unavailable — expected.
+- The channel’s Test button only probes DS_WebAgent’s /health; it does not send a real conversation.

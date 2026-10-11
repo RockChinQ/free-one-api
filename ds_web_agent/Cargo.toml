@@ -1,0 +1,27 @@
+[package]
+name = "ds_webagent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+async-trait = "0.1.92"
+axum = { version = "0.8.9", features = ["json", "macros", "tokio", "http1"] }
+chromiumoxide = { version = "0.9.1", features = ["rustls", "zip8"] }
+chrono = { version = "0.4.45", features = ["serde"] }
+clap = { version = "4.6.7", features = ["derive"] }
+futures-util = "0.3.34"
+regex = "1.13.1"
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "rustls", "gzip", "http2"] }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.21"
+tokio = { version = "1.53.2", features = ["full"] }
+toml = "1.1.8"
+tower = { version = "0.5.3", features = ["limit", "util"] }
+tower-http = { version = "0.7.1", features = ["trace", "cors"] }
+tracing = "0.1.44"
+tracing-appender = "0.2.5"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt", "ansi"] }
+uuid = { version = "1.28.0", features = ["v4", "serde"] }

@@ -1,24 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>Free One API - Documentation</title>
+  <title>Free One API · 把各种 LLM 逆向工程库统一成标准 OpenAI API</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="Description">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0"><!-- Theme: Simple Dark -->
+  <meta name="description" content="Free One API 中文文档：把各种 LLM 逆向工程库（ChatGPT、Claude、DeepSeek 网页版等）统一封装成标准 OpenAI API。含 Docker 部署、客户端接入、工具调用与 DS_WebAgent 真实浏览器渠道教程。">
+  <!-- SEO -->
+  <meta name="keywords" content="Free One API,OpenAI API 兼容,LLM 逆向,反向代理,自部署,DeepSeek 网页版,DS_WebAgent,ChatGPT 网页版,Claude,gpt4free,通义千问,流式输出,工具调用,tool_calls,负载均衡">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+  <meta name="author" content="RockChinQ">
+  <meta name="theme-color" content="#0d0f13">
+  <link rel="canonical" href="https://free-one-api.rockchin.top/">
+  <link rel="alternate" hreflang="zh-CN" href="https://free-one-api.rockchin.top/#/zh-CN/">
+  <link rel="alternate" hreflang="en" href="https://free-one-api.rockchin.top/#/en/">
+  <link rel="alternate" hreflang="x-default" href="https://free-one-api.rockchin.top/">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Free One API">
+  <meta property="og:title" content="Free One API · 把各种 LLM 逆向工程库统一成标准 OpenAI API">
+  <meta property="og:description" content="一个地址、一个 key、一套协议：把各种 LLM 逆向工程库统一成标准 OpenAI API，支持流式输出、工具调用与多通道负载均衡，并附带 DS_WebAgent 真实浏览器渠道。">
+  <meta property="og:url" content="https://free-one-api.rockchin.top/">
+  <meta property="og:image" content="https://free-one-api.rockchin.top/zh-CN/assets/load_balance.png">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:locale:alternate" content="en_US">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free One API · 把各种 LLM 逆向工程库统一成标准 OpenAI API">
+  <meta name="twitter:description" content="一个地址、一个 key、一套协议：把各种 LLM 逆向工程库统一成标准 OpenAI API，并支持接入 DS_WebAgent（真实浏览器驱动 DeepSeek 网页版）。">
+  <meta name="twitter:image" content="https://free-one-api.rockchin.top/zh-CN/assets/load_balance.png">
+  <!-- 结构化数据 -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Free One API","alternateName":"Free One API 文档","url":"https://free-one-api.rockchin.top/","inLanguage":["zh-CN","en"],"description":"把各种 LLM 逆向工程库统一封装成标准 OpenAI API 的文档站。"},{"@type":"SoftwareApplication","name":"Free One API","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, Linux, macOS, Docker","url":"https://free-one-api.rockchin.top/","downloadUrl":"https://github.com/RockChinQ/free-one-api","codeRepository":"https://github.com/RockChinQ/free-one-api","programmingLanguage":["Python","Rust"],"offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},"description":"通过标准 OpenAI API 格式访问各种 LLM 逆向工程库，支持流式输出、工具调用、多通道负载均衡与心跳检测。"},{"@type":"TechArticle","headline":"Free One API 文档","url":"https://free-one-api.rockchin.top/","inLanguage":"zh-CN","about":"LLM 逆向工程库统一 OpenAI API 封装与部署","isPartOf":{"@type":"WebSite","url":"https://free-one-api.rockchin.top/"}}]}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+  <style>
+    :root {
+      --theme-color: #4f8cff;
+      --theme-color-secondary: #7c5cff;
+      --base-font-size: 16px;
+      --sidebar-width: 17rem;
+      --content-max-width: 52em;
+      --code-theme-background: #14171c;
+      --table-head-background: rgba(79, 140, 255, .12);
+      --table-row-alt-background: rgba(255, 255, 255, .025);
+    }
+    .app-name-link {
+      background: linear-gradient(90deg, #4f8cff, #7c5cff 60%, #29d3c1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .sidebar {
+      background: linear-gradient(180deg, rgba(20, 23, 28, .98), rgba(13, 15, 19, .98));
+      border-right: 1px solid rgba(255, 255, 255, .06);
+    }
+    .sidebar ul li a { border-radius: 0; padding: 6px 10px; transition: background .15s ease; }
+    .sidebar ul li a:hover { border-radius: 0; background: rgba(79, 140, 255, .14); }
+    .sidebar ul li.active > a {
+      background: linear-gradient(90deg, rgba(79, 140, 255, .22), rgba(124, 92, 255, .12));
+      border-left: none;
+      font-weight: 600;
+    }
+    /* 侧边栏链接：彻底去掉下划线（docsify 默认样式与各状态都不留） */
+    .sidebar a,
+    .sidebar a:hover,
+    .sidebar a:focus,
+    .sidebar a:active,
+    .sidebar li.active > a,
+    .sidebar ul li a {
+      text-decoration: none !important;
+      border-bottom: none !important;
+      box-shadow: none !important;
+    }
+    /* 侧边栏宽度可拖拽：右边缘的拉伸把手 */
+    .sidebar-resizer {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: col-resize;
+      z-index: 60;
+      background: transparent;
+      transition: background .15s ease;
+    }
+    .sidebar-resizer:hover,
+    .sidebar-resizer.active {
+      background: linear-gradient(90deg, transparent, rgba(79, 140, 255, .45));
+    }
+    /* 拖动过程中：关掉过渡、禁止选中文字，避免跟手迟滞 */
+    body.sidebar-resizing .sidebar { transition: none !important; }
+    body.sidebar-resizing { user-select: none; cursor: col-resize; }
+    body.sidebar-resizing * { user-select: none !important; }
+    @media screen and (max-width: 768px) { .sidebar-resizer { display: none !important; } }
+    .sidebar .app-name { padding: 18px 0 10px; }
+    .markdown-section { padding-bottom: 6rem; }
+    .markdown-section h1 { font-size: 1.9rem; border-bottom: 2px solid rgba(79, 140, 255, .35); padding-bottom: .4rem; }
+    .markdown-section h2 { margin-top: 2.4rem; padding-left: .6rem; border-left: 4px solid var(--theme-color); }
+    .markdown-section h3 { margin-top: 1.8rem; color: #9fc0ff; }
+    .markdown-section code { background: rgba(79, 140, 255, .12); border-radius: 5px; padding: .15em .38em; font-size: .92em; }
+    .markdown-section pre { border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); }
+    .markdown-section pre > code { background: none; padding: 0; }
+    .markdown-section table { display: table; width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; font-size: .95em; }
+    .markdown-section td, .markdown-section th { border-color: rgba(255, 255, 255, .08); padding: .55em .8em; }
+    .markdown-section blockquote {
+      border-left: 4px solid var(--theme-color-secondary);
+      background: rgba(124, 92, 255, .08);
+      border-radius: 0 8px 8px 0;
+      padding: .8rem 1rem;
+      color: #cfd6e4;
+    }
+    .badge { display: inline-block; padding: .1em .55em; border-radius: 999px; font-size: .78em; font-weight: 600; line-height: 1.6; vertical-align: middle; }
+    .badge-ok { background: rgba(41, 211, 193, .16); color: #43e0cd; }
+    .badge-no { background: rgba(255, 99, 99, .14); color: #ff8a8a; }
+    .docsify-copy-code-button { border-radius: 6px; background: rgba(79, 140, 255, .85); font-weight: 600; }
+    .sidebar .search { padding: 6px 12px 2px; }
+    .sidebar .search input { border-radius: 0; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); color: #e6eaf2; }
+    .sidebar .search .results-panel { background: #171a20; border-radius: 0; }
+    .sidebar .search .matching-post { border-bottom: 1px solid rgba(255, 255, 255, .06); }
+    .docsify-pagination-container { margin-top: 3rem; border-top: 1px solid rgba(255, 255, 255, .07); }
+    @media screen and (max-width: 768px) {
+      .markdown-section { padding: 0 1rem 4rem; }
+      .markdown-section h1 { font-size: 1.55rem; }
+    }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
+  <noscript>
+    <div style="max-width:52em;margin:2rem auto;padding:0 1rem;line-height:1.8;color:#e6eaf2;background:#0d0f13;font-family:system-ui,-apple-system,Segoe UI,sans-serif">
+      <h1>Free One API 文档</h1>
+      <p>把各种 LLM 逆向工程库统一封装成标准 OpenAI API：一个地址、一个 key、一套协议，支持流式输出、工具调用（tools / tool_choice）与多通道负载均衡。</p>
+      <h2>文档目录</h2>
+      <ul>
+        <li><a href="#/zh-CN/Setup">部署：Docker / Docker Compose / 手动部署 / systemd / Nginx 与 Caddy 反向代理</a></li>
+        <li><a href="#/zh-CN/Usage">使用：创建渠道与 API Key、OpenAI 客户端接入、工具调用示例</a></li>
+        <li><a href="#/zh-CN/Adapters">适配器：各逆向工程库的配置方式</a></li>
+        <li><a href="#/zh-CN/DSWebAgent">接入 DS_WebAgent：DeepSeek 网页版渠道（真实浏览器驱动，无需 cookie）</a></li>
+        <li><a href="#/zh-CN/Config">配置文件：data/config.yaml 全字段说明</a></li>
+        <li><a href="#/zh-CN/FAQ">常见问题：部署与请求排错</a></li>
+        <li><a href="#/en/">English documentation</a></li>
+      </ul>
+      <p>项目仓库：<a href="https://github.com/RockChinQ/free-one-api">github.com/RockChinQ/free-one-api</a></p>
+      <p>交互式文档需要启用 JavaScript；上面的链接在启用后同样可用。</p>
+    </div>
+  </noscript>
+  <div id="app">正在加载文档…</div>
   <script>
     window.$docsify = {
-      name: 'free-one-api',
+      name: 'Free One API',
       repo: 'https://github.com/RockChinQ/free-one-api',
       loadSidebar: true,
+      // 关掉内置 scrollActive:长页面滚到底时它会滞后一档,改由 spy.js 精确跟随
+      scrollActive: false,
       subMaxLevel: 3,
-    }
+      maxLevel: 5,
+      auto2top: true,
+      relativePath: false,
+      notFoundPage: true,
+      themeable: { readyTransition: true, responsiveTables: true },
+      search: { placeholder: '搜索文档…', noData: '没有找到相关内容', depth: 3 },
+      copyCode: { buttonText: '复制', errorText: '复制失败', successText: '已复制' },
+      pagination: { previousText: '上一页', nextText: '下一页' },
+      plugins: [
+        function (hook) {
+          hook.doneEach(function () {
+            document.querySelectorAll('.markdown-section a[href^="http"]').forEach(function (a) {
+              a.setAttribute('target', '_blank');
+              a.setAttribute('rel', 'noopener');
+            });
+          });
+        }
+      ]
+    };
   </script>
-  <!-- Docsify v4 -->
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@2/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse@1/dist/docsify-sidebar-collapse.min.js"></script>
+  <script src="spy.js"></script>
+  <script src="sidebar-resize.js"></script>
+  <script src="seo.js"></script>
 </body>
 </html>

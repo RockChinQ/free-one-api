@@ -1,0 +1,40 @@
+# free-one-api + DS_WebAgent 一起跑。
+#
+#   docker compose -f docker-compose.dswebagent.yaml up -d --build
+#
+# 首次启动后三步走:
+#   1. 打开 http://localhost:16080/vnc.html ,在容器里的 Chromium 中手动登录 DeepSeek;
+#      (登录态存在 ./ds_webagent-data/browser-profile,以后重启不用再登)
+#   2. 打开 http://localhost:3000/ 进 free-one-api 管理页(默认密码 12345678);
+#   3. 「添加渠道」→ 适配器选 ds-webagent/deepseek-web → 保存,然后点测试。
+#
+# 端口:3000 free-one-api 管理/API、19178->9178 DS_WebAgent API、16080->6080 noVNC 可视化桌面
+services:
+  ds-webagent:
+    build:
+      context: ./ds_web_agent
+    image: ds-webagent:local
+    container_name: ds-webagent
+    restart: always
+    # Chromium 在容器里需要更大的 /dev/shm
+    shm_size: "1gb"
+    environment:
+      DSWA_API_TOKEN: local-dev-token
+    volumes:
+      - ./ds_webagent-data:/data
+    ports:
+      - "19178:9178"
+      - "16080:6080"
+
+  free-one-api:
+    build:
+      context: .
+    image: free-one-api:dswebagent
+    container_name: free-one-api
+    restart: always
+    depends_on:
+      - ds-webagent
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "3000:3000"

@@ -1,0 +1,236 @@
+# DS_WebAgent 配置
+#
+# 选择器全部集中在本文件,页面改版时只需改这里,不要改核心业务代码。
+# 环境变量可覆盖关键项(见 README「环境变量覆盖」一节)。
+
+[server]
+host = "127.0.0.1"
+port = 9178
+# 本地个人使用:固定本地 token,防止同机其它进程误调用
+api_token = "local-dev-token"
+# 低频串行:并发请求会被排队串行执行
+max_concurrent_requests = 1
+# 单个 API 请求(含多轮)的最长处理时间
+request_timeout_secs = 900
+
+[browser]
+adapter = "chromiumoxide"
+# 留空表示交给 chromiumoxide 自动探测;Debian 上通常是 /usr/bin/chromium 或 /usr/bin/google-chrome
+chrome_executable = ""
+home_url = "https://chat.deepseek.com/"
+# 独立 user-data-dir,登录态保存在这里,复用同一目录即可免重复登录
+user_data_dir = "./data/browser-profile"
+# 硬性要求:必须使用有头真实浏览器
+headless = false
+window_width = 1440
+window_height = 900
+# 模拟 Windows 11 浏览器信息,仅通过标准 --user-agent 启动参数设置。
+# 注意:本项不是指纹伪装,项目刻意不使用任何隐藏 WebDriver/CDP 特征的开关。
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+locale = "zh-CN"
+# 以 root 或在容器内运行时才需要打开(沙箱不可用)
+no_sandbox = false
+launch_timeout_secs = 60
+# 额外的标准启动参数(不要放隐藏自动化特征的参数)
+extra_args = []
+# 登录检测轮询
+login_poll_secs = 3
+# 启动后等待用户手动登录的最长时间,0 表示一直等
+login_wait_secs = 0
+
+[conversation]
+# 回复超时(秒)
+reply_timeout_secs = 180
+# 最后一条 assistant 文本稳定多少秒视为生成结束
+stable_secs = 3
+poll_interval_ms = 500
+# 发送失败重试次数
+send_retry = 1
+# 一个对话最多多少轮,超过则按上下文管理策略轮换
+max_rounds_per_conversation = 12
+# 发送后至少等待多久才开始判定(避开"停止生成"按钮还没渲染出来的空窗)
+min_wait_after_send_ms = 800
+
+[agent]
+# 默认最大轮次(请求可覆盖,但不会超过 max_rounds_limit)
+max_rounds = 8
+max_rounds_limit = 24
+# JSON 解析失败时最多回填修正提示几次
+max_json_retries = 2
+# 可选:用外部文件覆盖内置强提示词模板(必须保留 {{tools_json}} {{model_mode}} {{environment}} 占位符)
+prompt_file = ""
+# 可选:写入记录的正文截断长度
+record_text_limit = 4000
+
+[context]
+enabled = true
+# chars_div_4: 字符数/4 (需求默认) | cjk_aware: 中日韩字符按 1 token 计
+mode = "chars_div4"
+# 超过该字符数(估算)就轮换到新对话
+max_context_chars = 4000000
+# 轮换前预留,给摘要与后续轮次留空间
+reserve_chars = 200000
+# 摘要正文最大字符数
+summary_max_chars = 2400
+
+[tools]
+# 危险工具默认禁用,打开后仍需在 enabled 中显式列出
+# http_get 是唯一出网工具,按危险工具处理;true 才会出现在注入给模型的工具清单里
+allow_dangerous = true
+enabled = ["get_time", "echo", "http_get"]
+execute_timeout_secs = 20
+
+[tools.http_get]
+# 出网白名单:为空表示禁止访问任何主机(默认拒绝,必须显式加域名)
+allowed_hosts = ["example.com"]
+timeout_secs = 10
+max_bytes = 262144
+
+[storage]
+enabled = true
+dir = "./logs"
+log_file = "./logs/deeptoolbridge.log"
+screenshot_dir = "./logs/screenshots"
+# JSONL 明细记录(会话/轮次/工具调用/错误)
+jsonl_dir = "./logs/records"
+# SQLite 汇总统计(对话数、Token、节省金额)
+sqlite_path = "./data/dswa.db"
+# 是否把 HTTP 请求/响应正文写进记录
+record_http_bodies = true
+
+[pricing]
+# 官方 API 价格(元 / 百万 tokens),用于计算"网页版相对 API 的累计节省金额"
+input_per_million = 9.0
+output_per_million = 27.0
+currency = "CNY"
+
+[logging]
+# 等价于 RUST_LOG,可被环境变量 DSWA_LOG_LEVEL / RUST_LOG 覆盖
+level = "info"
+# 写入日志文件时是否保留 ANSI 颜色(文件里通常关闭)
+ansi_in_file = false
+# 是否同时打到控制台(后台运行时可以关掉)
+stdout = true
+
+# ── 外部 API 可调用的模型 ────────────────────────────────────────────────
+# 三个 ID 对应 DeepSeek 网页上的两个开关(联网搜索 / 深度思考)的组合。
+[models]
+default = "ds-web-search"
+# 每次对话开始时校验并按下开关
+apply_toggles_on_new_conversation = true
+
+[[models.variants]]
+id = "ds-web-search"
+label = "搜索不思考"
+search = true
+think = false
+
+[[models.variants]]
+id = "ds-web-think"
+label = "思考不搜索"
+search = false
+think = true
+
+[[models.variants]]
+id = "ds-web-search-think"
+label = "搜索且思考"
+search = true
+think = true
+
+[selectors]
+# 提交方式: enter(回车发送) | button(点击发送按钮) | enter_then_button
+submit_with = "enter"
+# 输入方式: type_str | type_str_verify(输入后校验,失败回退到 JS 原生 setter + input 事件)
+type_strategy = "type_str_verify"
+
+# ── 登录检测 ──
+# 输入框候选(按顺序尝试,命中第一个可用元素)
+login_input = [
+  "textarea#chat-input",
+  "textarea[placeholder*='DeepSeek']",
+  "textarea[placeholder*='给 DeepSeek']",
+  "div[contenteditable='true'][role='textbox']",
+  "textarea",
+]
+# 登录态标志:头像 / 退出 / 侧边栏用户区
+login_indicator = [
+  "div[class*='avatar']",
+  "img[class*='avatar']",
+  "[data-testid='user-avatar']",
+  "button[aria-label*='账号']",
+  "div[class*='user-info']",
+]
+# URL 命中该片段也视为已登录(配合输入框可用)
+logged_in_url_markers = ["/a/chat", "/chat/"]
+# 命中这些 URL 片段视为还在登录页(未登录)。登录页也有手机号输入框,
+# 所以判定顺序是:先排除登录页,再看聊天输入框是否可用。
+not_logged_in_url_markers = ["sign_in"]
+
+# ── 对话操作 ──
+new_chat_button = [
+  "div[class*='new-chat']",
+  "button[class*='new-chat']",
+  "a[href='/a/chat']",
+  "[data-testid='new-chat']",
+  "text=开启新对话",
+]
+chat_input = [
+  "textarea#chat-input",
+  "textarea[placeholder*='DeepSeek']",
+  "div[contenteditable='true'][role='textbox']",
+  "textarea",
+]
+send_button = [
+  "div[role='button'][class*='send']",
+  "button[class*='send']",
+  "[data-testid='send-button']",
+  "div[class*='_7436101']",
+]
+stop_button = [
+  "div[role='button'][class*='stop']",
+  "button[class*='stop']",
+  "[data-testid='stop-button']",
+  "div[class*='stop-generating']",
+]
+
+# ── 消息读取 ──
+# assistant 消息候选(读取最后一条)
+assistant_message = [
+  "div[class*='ds-markdown']",
+  "div[class*='markdown']",
+  "div[class*='assistant'] div[class*='message']",
+]
+# 在这些子树内且命中下列选择器的内容会被剔除后再读文本(例如思考过程/工具栏)
+assistant_message_exclude = [
+  "div[class*='thinking']",
+  "div[class*='reasoning']",
+  "div[class*='toolbar']",
+  "div[class*='action']",
+]
+user_message = [
+  "div[class*='user'] div[class*='message']",
+  "div[class*='user-message']",
+]
+
+# ── 联网搜索 / 深度思考开关 ──
+# 状态判定属性(按顺序读取),值为真则视为已开启
+toggle_checked_attr = ["aria-checked", "data-state"]
+toggle_checked_values = ["true", "checked", "on", "active"]
+toggle_checked_class_markers = ["checked", "active", "selected", "on"]
+toggle_search = [
+  "button[aria-label*='联网']",
+  "[data-testid='search-toggle']",
+  "div[class*='search-toggle']",
+  "div[class*='web-search']",
+]
+toggle_think = [
+  "button[aria-label*='深度思考']",
+  "[data-testid='think-toggle']",
+  "div[class*='think-toggle']",
+  "div[class*='deep-think']",
+]
+
+# ── 可选:覆盖 assistant 文本提取脚本 ──
+# 可用占位符 {{assistant_message}} / {{assistant_message_exclude}}(JSON 数组)
+# 脚本需返回字符串。
+assistant_extract_js = ""

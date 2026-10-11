@@ -48,6 +48,14 @@ Access all reverse engineered LLM libs by standard OpenAI API format.
 
 </details>
 
+## Community
+
+Questions, reverse-engineering chat, feature requests or contributions — join us:
+
+- QQ group 1: (full)
+- QQ group 2: 1091113674
+- [Telegram](https://t.me/+qpeq4Ev9FuI0YjVl)
+- [Discord](https://discord.gg/W44yRcG5b)
 ## Documentation
 
 ✨Star this repo plz✨  

@@ -23,6 +23,7 @@ from .adapter import gpt4free
 from .adapter import hugchat
 from .adapter import qianwen
 from .adapter import re_gpt
+from .adapter import ds_web_agent
 
 from . import log
 from . import cfg as cfgutil
@@ -113,7 +114,13 @@ default_config = {
         "acheong08_ChatGPT": {
             "reverse_proxy": "https://chatproxy.rockchin.top/api/",
             "auto_ignore_duplicated": True,
-        }
+        },
+        "ds-webagent/deepseek-web": {
+            "base_url": "http://ds-webagent:9178",
+            "api_token": "local-dev-token",
+            "default_model": "ds-web-search",
+            "timeout_secs": 900,
+        },
     }
 }
 
@@ -205,6 +212,7 @@ async def make_application(config_path: str) -> Application:
         "Soulter_hugging-chat-api": hugchat.HuggingChatAdapter,
         "xw5xr6_revTongYi": qianwen.QianWenAdapter,
         "Zai-Kun_reverse-engineered-chatgpt": re_gpt.ReGPTAdapter,
+        "ds-webagent/deepseek-web": ds_web_agent.DSWebAgentAdapter,
     }
 
     for adapter_name in adapter_config_mapping:

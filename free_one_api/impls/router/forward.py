@@ -8,6 +8,7 @@ from ...models.channel import mgr as channelmgr
 from ...models.database import db
 from ...models.forward import mgr as forwardmgr
 from ...entities import channel, apikey, request, response, exceptions
+from ..forward import protocol as protocolmod
 
 
 class ForwardAPIGroup(routergroup.APIGroup):
@@ -48,6 +49,8 @@ class ForwardAPIGroup(routergroup.APIGroup):
                     raw_data["messages"],
                     raw_data["functions"] if "functions" in raw_data else None,
                     'stream' in raw_data and raw_data["stream"],
+                    raw_data.get("tools"),
+                    raw_data.get("tool_choice"),
                 )
                 
                 return await self.fwdmgr.query(
@@ -79,6 +82,85 @@ class ForwardAPIGroup(routergroup.APIGroup):
                     }
                 ), 500
         
+        @self.api("/v1/models", ["GET"], auth=True)
+        async def list_models():
+            """List available models (OpenAI compatible)."""
+            models = [
+                "ds-web-search",
+                "ds-web-think",
+                "ds-web-search-think",
+            ]
+            return quart.jsonify({
+                "object": "list",
+                "data": [
+                    {
+                        "id": m, "object": "model", "created": 0, "owned_by": "free-one-api",
+                    } for m in models
+                ],
+            })
+        @self.api("/v1/responses", ["POST"], auth=True)
+        async def responses_api():
+            # OpenAI Responses API,内部转成 Chat Completions 走同一条适配器链路。
+            try:
+                raw_data = await quart.request.get_json()
+                parsed = protocolmod.parse_responses_request(raw_data)
+                req = request.Request(
+                    parsed["model"],
+                    parsed["messages"],
+                    None,
+                    parsed["stream"],
+                    parsed["tools"],
+                    parsed["tool_choice"],
+                )
+                return await self.fwdmgr.query(
+                    "/v1/responses",
+                    req,
+                    raw_data,
+                    proto=protocolmod.PROTOCOL_RESPONSES,
+                )
+            except exceptions.QueryHandlingError as e:
+                body, status = protocolmod.error_payload(
+                    protocolmod.PROTOCOL_RESPONSES, e.status_code, e.code, e.message, e.type
+                )
+                return quart.jsonify(body), status
+            except Exception as e:
+                traceback.print_exc()
+                body, status = protocolmod.error_payload(
+                    protocolmod.PROTOCOL_RESPONSES, 500, None, str(e)
+                )
+                return quart.jsonify(body), status
+
+        @self.api("/v1/messages", ["POST"], auth=True)
+        async def anthropic_messages():
+            # Anthropic Messages API,同上。
+            try:
+                raw_data = await quart.request.get_json()
+                parsed = protocolmod.parse_anthropic_request(raw_data)
+                req = request.Request(
+                    parsed["model"],
+                    parsed["messages"],
+                    None,
+                    parsed["stream"],
+                    parsed["tools"],
+                    parsed["tool_choice"],
+                )
+                return await self.fwdmgr.query(
+                    "/v1/messages",
+                    req,
+                    raw_data,
+                    proto=protocolmod.PROTOCOL_ANTHROPIC,
+                )
+            except exceptions.QueryHandlingError as e:
+                body, status = protocolmod.error_payload(
+                    protocolmod.PROTOCOL_ANTHROPIC, e.status_code, e.code, e.message, e.type
+                )
+                return quart.jsonify(body), status
+            except Exception as e:
+                traceback.print_exc()
+                body, status = protocolmod.error_payload(
+                    protocolmod.PROTOCOL_ANTHROPIC, 500, None, str(e)
+                )
+                return quart.jsonify(body), status
     def get_tokens(self) -> list[str]:
         """Override to use keys in keymgr as tokens."""
         key_obj_list: apikey.FreeOneAPIKey = self.keymgr.get_key_list()
@@ -88,6 +170,10 @@ class ForwardAPIGroup(routergroup.APIGroup):
         return key_list
 
     def check_auth(self, auth: str) -> quart.Response:
+        if auth is None:
+            alt = quart.request.headers.get("x-api-key") or quart.request.headers.get("api-key")
+            if alt:
+                auth = "Bearer " + alt
         if auth is None or not auth.startswith("Bearer "):
             return quart.jsonify(
                 {

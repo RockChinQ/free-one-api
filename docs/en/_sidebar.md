@@ -2,5 +2,7 @@
 * [Deployment](/en/Setup)
 * [Usage](/en/Usage)
 * [Adapters](/en/Adapters)
+* [DS_WebAgent](/en/DSWebAgent)
 * [Config File](/en/Config)
 * [Demo](/en/Demo)
+* [FAQ](/en/FAQ)

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# 站点是 Docsify 单页应用（hash 路由），这里只放行整站。
+Sitemap: https://free-one-api.rockchin.top/sitemap.xml
+# GitHub Pages mirror: https://rockchinq.github.io/free-one-api/

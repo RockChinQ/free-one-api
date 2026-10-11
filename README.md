@@ -56,6 +56,15 @@
 - GitHub Page: https://rockchinq.github.io/free-one-api
 - 自部署文档：https://free-one-api.rockchin.top
 
+## 与 DS_WebAgent 联动（可选的本地渠道）
+
+仓库里的 ds_web_agent/ 是一个 Rust 桥梁：驱动真实浏览器操作 DeepSeek 网页版，对外暴露 OpenAI 兼容接口。本项目提供一个转发适配器 ds-webagent/deepseek-web，把它当成一个普通渠道使用（需要先在它的浏览器里手动登录一次 DeepSeek）。
+
+bash
+docker compose -f docker-compose.dswebagent.yaml up -d --build
+
+
+启动后打开 http://localhost:6080/vnc.html 登录 DeepSeek，再进 http://localhost:3000/ 添加渠道即可。细节见 docs/zh-CN/Adapters.md 的「ds-webagent/deepseek-web」一节。
 ## 社区
 
 有问题、逆向交流、功能建议、参与贡献，加群：

@@ -11,3 +11,4 @@ g4f==8.1.6
 revTongYi
 colorlog
 re_gpt==4.0.0
+requests
