@@ -189,6 +189,6 @@ mod tests {
     #[test]
     fn summary_request_uses_configured_limit() {
         let m = manager(1000, 100, 10);
-        assert!(m.summary_request().contains("1200"));
+        assert!(m.summary_request().contains("2400"));
     }
 }

@@ -578,14 +578,23 @@ impl BrowserAdapter for ChromiumoxideAdapter {
             }
         };
 
-        // 用 chromiumoxide 的 upload_file 通过 CDP 设置文件
-        element
+        // 通过 CDP 的 DOM.setFileInputFiles 设置文件
+        // 需要 backend_node_id 来定位文件输入元素
+        let backend_node_id = element
             .element
-            .upload_file(file_path)
+            .description()
             .await
-            .map_err(|e| {
-                AppError::Browser(format!("上传文件失败({}): {}", file_path, e))
-            })?;
+            .map_err(AppError::browser)?
+            .backend_node_id;
+        let page = self.page().await?;
+        let cmd = chromiumoxide::cdp::browser_protocol::dom::SetFileInputFilesParams::builder()
+            .file(file_path)
+            .backend_node_id(backend_node_id)
+            .build()
+            .map_err(|e| AppError::Browser(format!("构建上传命令失败: {}", e)))?;
+        page.execute(cmd).await.map_err(|e| {
+            AppError::Browser(format!("上传文件失败({}): {}", file_path, e))
+        })?;
         self.release(&element).await;
 
         // 等文件上传完成(页面会显示上传进度/预览)

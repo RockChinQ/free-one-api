@@ -46,6 +46,7 @@ fn build_run(input: &str, tools: &[&str], max_rounds: usize) -> AgentRun {
         model: default_model(),
         events: None,
         cancel: None,
+        file_paths: Vec::new(),
     }
 }
 
