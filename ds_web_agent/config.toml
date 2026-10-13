@@ -47,14 +47,15 @@ poll_interval_ms = 500
 # 发送失败重试次数
 send_retry = 1
 # 一个对话最多多少轮,超过则按上下文管理策略轮换
-max_rounds_per_conversation = 12
+# 增大此值以支持更多轮对话
+max_rounds_per_conversation = 30
 # 发送后至少等待多久才开始判定(避开"停止生成"按钮还没渲染出来的空窗)
 min_wait_after_send_ms = 800
 
 [agent]
 # 默认最大轮次(请求可覆盖,但不会超过 max_rounds_limit)
-max_rounds = 8
-max_rounds_limit = 24
+max_rounds = 16
+max_rounds_limit = 48
 # JSON 解析失败时最多回填修正提示几次
 max_json_retries = 2
 # 可选:用外部文件覆盖内置强提示词模板(必须保留 {{tools_json}} {{model_mode}} {{environment}} 占位符)
@@ -67,7 +68,8 @@ enabled = true
 # chars_div_4: 字符数/4 (需求默认) | cjk_aware: 中日韩字符按 1 token 计
 mode = "chars_div4"
 # 超过该字符数(估算)就轮换到新对话
-max_context_chars = 4000000
+# 增大此值以支持更多轮对话
+max_context_chars = 8000000
 # 轮换前预留,给摘要与后续轮次留空间
 reserve_chars = 200000
 # 摘要正文最大字符数
@@ -191,6 +193,30 @@ stop_button = [
   "button[class*='stop']",
   "[data-testid='stop-button']",
   "div[class*='stop-generating']",
+]
+
+# ── 文件/图片上传 ──
+# 上传按钮(附件/图片图标),点击后触发文件选择器
+upload_button = [
+  "button[aria-label*='上传']",
+  "button[aria-label*='附件']",
+  "button[aria-label*='图片']",
+  "div[class*='upload']",
+  "div[class*='attach']",
+  "label[for*='file']",
+  "input[type='file']",
+]
+# 隐藏的文件输入框(点击上传按钮后出现)
+file_input = [
+  "input[type='file']",
+  "input[accept*='image']",
+  "input[accept*='file']",
+]
+# 上传区域(拖放区域或点击区域)
+upload_area = [
+  "div[class*='upload-area']",
+  "div[class*='drop-zone']",
+  "div[class*='file-input']",
 ]
 
 # ── 消息读取 ──

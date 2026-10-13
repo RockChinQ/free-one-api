@@ -118,6 +118,62 @@ impl OpenAiMessage {
             other => other.to_string(),
         }
     }
+
+    /// 提取消息中的文件/图片路径列表。
+    /// 支持 OpenAI 多模态格式:image_url 或 file_url 中的本地路径。
+    pub fn extract_file_paths(&self) -> Vec<String> {
+        let mut paths = Vec::new();
+        if let Value::Array(parts) = &self.content {
+            for part in parts {
+                // image_url 格式: {"type": "image_url", "image_url": {"url": "..."}}
+                if part.get("type").and_then(Value::as_str) == Some("image_url") {
+                    if let Some(url) = part
+                        .pointer("/image_url/url")
+                        .and_then(Value::as_str)
+                    {
+                        if let Some(path) = url_to_path(url) {
+                            paths.push(path);
+                        }
+                    }
+                }
+                // file_url 格式: {"type": "file_url", "file_url": {"url": "..."}}
+                if part.get("type").and_then(Value::as_str) == Some("file_url") {
+                    if let Some(url) = part
+                        .pointer("/file_url/url")
+                        .and_then(Value::as_str)
+                    {
+                        if let Some(path) = url_to_path(url) {
+                            paths.push(path);
+                        }
+                    }
+                }
+                // 直接是路径字符串
+                if part.get("type").and_then(Value::as_str) == Some("file_path") {
+                    if let Some(path) = part.get("path").and_then(Value::as_str) {
+                        paths.push(path.to_string());
+                    }
+                }
+            }
+        }
+        paths
+    }
+}
+
+/// 从 URL 或路径中提取本地文件路径。
+/// 支持 file:// 前缀和直接路径。
+fn url_to_path(url: &str) -> Option<String> {
+    if let Some(path) = url.strip_prefix("file://") {
+        return Some(path.to_string());
+    }
+    // 检查是否是本地路径(不是 http/https/data 开头)
+    if !url.starts_with("http://")
+        && !url.starts_with("https://")
+        && !url.starts_with("data:")
+        && !url.starts_with("ftp://")
+    {
+        return Some(url.to_string());
+    }
+    None
 }
 
 #[derive(Debug, Clone, Deserialize)]

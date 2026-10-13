@@ -141,6 +141,10 @@ impl BrowserAdapter for NoopBrowser {
         Ok(())
     }
 
+    async fn upload_file(&self, _path: &str) -> Result<()> {
+        Ok(())
+    }
+
     async fn is_generating(&self) -> Result<bool> {
         Ok(false)
     }
@@ -312,6 +316,10 @@ impl ChatBackend for MockChatBackend {
         *guard = Some(record);
         drop(guard);
         Ok((conversation_id, self.take_reply()))
+    }
+
+    async fn upload_file(&self, _session_id: &str, _path: &str) -> Result<()> {
+        Ok(())
     }
 
     async fn remember_prompt(&self, _session_id: &str, _prompt_block: &str) -> Result<()> {

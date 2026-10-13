@@ -75,6 +75,14 @@ pub struct SelectorConfig {
     pub toggle_search: Vec<String>,
     pub toggle_think: Vec<String>,
 
+    // ── 文件/图片上传 ──
+    /// 上传按钮(附件/图片图标),点击后触发文件选择器
+    pub upload_button: Vec<String>,
+    /// 隐藏的文件输入框(点击上传按钮后出现)
+    pub file_input: Vec<String>,
+    /// 上传区域(拖放区域或点击区域)
+    pub upload_area: Vec<String>,
+
     /// 可选:覆盖 assistant 文本提取脚本,需返回字符串。
     pub assistant_extract_js: String,
 }
@@ -143,6 +151,25 @@ impl Default for SelectorConfig {
             toggle_think: vec![
                 "button[aria-label*='深度思考']".into(),
                 "[data-testid='think-toggle']".into(),
+            ],
+            upload_button: vec![
+                "button[aria-label*='上传']".into(),
+                "button[aria-label*='附件']".into(),
+                "button[aria-label*='图片']".into(),
+                "div[class*='upload']".into(),
+                "div[class*='attach']".into(),
+                "label[for*='file']".into(),
+                "input[type='file']".into(),
+            ],
+            file_input: vec![
+                "input[type='file']".into(),
+                "input[accept*='image']".into(),
+                "input[accept*='file']".into(),
+            ],
+            upload_area: vec![
+                "div[class*='upload-area']".into(),
+                "div[class*='drop-zone']".into(),
+                "div[class*='file-input']".into(),
             ],
             assistant_extract_js: String::new(),
         }

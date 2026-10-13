@@ -229,6 +229,13 @@ async fn openai_chat_completions(
 
     let model = resolve_model(&state, req.model.as_deref())?;
     let model_id = model.id.clone();
+
+    // 提取消息中的文件/图片路径
+    let mut file_paths = Vec::new();
+    for msg in &req.messages {
+        file_paths.extend(msg.extract_file_paths());
+    }
+
     let run = AgentRun {
         session_id: req.session_id.clone(),
         input,
@@ -238,6 +245,7 @@ async fn openai_chat_completions(
         model,
         events: None,
         cancel: None,
+        file_paths,
     };
     let input_chars = run.input.chars().count();
     let meta = OpenAiChunkMeta::new(&model_id);

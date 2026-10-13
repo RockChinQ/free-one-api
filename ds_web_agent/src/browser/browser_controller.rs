@@ -63,6 +63,10 @@ pub trait BrowserAdapter: Send + Sync {
     async fn input_value(&self) -> Result<String>;
     async fn submit(&self) -> Result<()>;
 
+    /// 上传文件到当前对话。path 是本地文件路径。
+    /// 先点击上传按钮触发文件选择器,再通过 CDP 设置文件路径。
+    async fn upload_file(&self, path: &str) -> Result<()>;
+
     async fn is_generating(&self) -> Result<bool>;
     async fn assistant_message_count(&self) -> Result<usize>;
     async fn last_assistant_text(&self) -> Result<Option<String>>;
@@ -530,6 +534,64 @@ impl BrowserAdapter for ChromiumoxideAdapter {
                 Ok(())
             }
         }
+    }
+
+    async fn upload_file(&self, path: &str) -> Result<()> {
+        use std::path::Path;
+        let p = Path::new(path);
+        if !p.exists() {
+            return Err(AppError::BadRequest(format!("文件不存在: {}", path)));
+        }
+        let abs = std::fs::canonicalize(p)
+            .map_err(|e| AppError::BadRequest(format!("无法解析文件路径 {}: {}", path, e)))?;
+        let file_path = abs.to_str().ok_or_else(|| {
+            AppError::BadRequest(format!("文件路径包含非 UTF-8 字符: {}", path))
+        })?;
+
+        // 先尝试直接找 file input(有些页面它一直存在,只是隐藏)
+        let resolved = self.resolve(&self.selectors.file_input).await?;
+        let element = match resolved {
+            Some(r) => r,
+            None => {
+                // 找不到就点上传按钮触发文件选择器
+                let btn = self.resolve(&self.selectors.upload_button).await?;
+                let btn = match btn {
+                    Some(b) => b,
+                    None => {
+                        return Err(self
+                            .selector_error(&self.selectors.upload_button.join(" | "))
+                            .await)
+                    }
+                };
+                let _ = btn.element.click().await.map_err(AppError::browser)?;
+                self.release(&btn).await;
+                // 等文件选择器出现
+                tokio::time::sleep(Duration::from_millis(500)).await;
+                match self.resolve(&self.selectors.file_input).await? {
+                    Some(r) => r,
+                    None => {
+                        return Err(self
+                            .selector_error(&self.selectors.file_input.join(" | "))
+                            .await)
+                    }
+                }
+            }
+        };
+
+        // 用 chromiumoxide 的 upload_file 通过 CDP 设置文件
+        element
+            .element
+            .upload_file(file_path)
+            .await
+            .map_err(|e| {
+                AppError::Browser(format!("上传文件失败({}): {}", file_path, e))
+            })?;
+        self.release(&element).await;
+
+        // 等文件上传完成(页面会显示上传进度/预览)
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        info!("文件已上传: {}", file_path);
+        Ok(())
     }
 
     async fn is_generating(&self) -> Result<bool> {

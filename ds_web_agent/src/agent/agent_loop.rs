@@ -163,6 +163,8 @@ pub struct AgentRun {
     pub events: Option<tokio::sync::mpsc::UnboundedSender<AgentEvent>>,
     /// 外部取消(客户端断开)
     pub cancel: Option<tokio::sync::watch::Receiver<bool>>,
+    /// 需要上传的文件路径列表(在发送消息前上传到当前对话)
+    pub file_paths: Vec<String>,
 }
 
 pub struct AgentLoop {
@@ -421,6 +423,17 @@ impl AgentLoop {
                 (sid, None)
             }
         };
+
+        // 上传文件/图片到当前对话(在消息发送前完成)
+        if !run.file_paths.is_empty() {
+            for file_path in &run.file_paths {
+                info!(session_id = %session_id, file = %file_path, "上传文件到对话");
+                if let Err(e) = self.backend.upload_file(&session_id, file_path).await {
+                    warn!(session_id = %session_id, file = %file_path, error = %e, "文件上传失败");
+                    // 上传失败不阻断流程,继续发送消息
+                }
+            }
+        }
 
         let mut conversation_id = match &new_run {
             Some((_, cid, _)) => cid.clone(),
