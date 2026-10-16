@@ -26,6 +26,21 @@ DEFAULTS = {
 }
 
 
+def _url_to_path(url: str) -> str | None:
+    """从 URL 或路径中提取本地文件路径。
+
+    支持 file:// 前缀和直接路径。
+    返回 None 表示不是本地路径（如 http/https/data URL）。
+    """
+    if not url:
+        return None
+    if url.startswith("file://"):
+        return url[7:]
+    if url.startswith(("http://", "https://", "data:", "ftp://")):
+        return None
+    return url
+
+
 @adapter.llm_adapter
 class DSWebAgentAdapter(llm.LLMLibAdapter):
     """把本地运行的 DS_WebAgent 接入 free-one-api。"""
@@ -131,6 +146,41 @@ class DSWebAgentAdapter(llm.LLMLibAdapter):
         if not tools and getattr(req, "functions", None):
             payload["functions"] = req.functions
         return payload
+
+    @staticmethod
+    def _extract_file_paths(messages: list) -> list[str]:
+        """从 OpenAI 格式消息中提取本地文件/图片路径。
+
+        支持以下格式:
+        - {"type": "image_url", "image_url": {"url": "/path/to/file"}}
+        - {"type": "file_url", "file_url": {"url": "/path/to/file"}}
+        - {"type": "file_path", "path": "/path/to/file"}
+        - file:// 前缀的 URL
+        """
+        paths = []
+        for msg in messages:
+            content = msg.get("content")
+            if not isinstance(content, list):
+                continue
+            for part in content:
+                if not isinstance(part, dict):
+                    continue
+                part_type = part.get("type")
+                if part_type == "image_url":
+                    url = part.get("image_url", {}).get("url", "")
+                    path = _url_to_path(url)
+                    if path:
+                        paths.append(path)
+                elif part_type == "file_url":
+                    url = part.get("file_url", {}).get("url", "")
+                    path = _url_to_path(url)
+                    if path:
+                        paths.append(path)
+                elif part_type == "file_path":
+                    path = part.get("path", "")
+                    if path:
+                        paths.append(path)
+        return paths
 
     def _post_chat(self, payload: dict) -> dict:
         resp = requests.post(

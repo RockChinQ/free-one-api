@@ -188,6 +188,9 @@ pub trait ChatBackend: Send + Sync {
         model: &ModelVariant,
     ) -> Result<(String, Reply)>;
 
+    /// 上传文件到当前对话。path 是本地文件路径。
+    async fn upload_file(&self, session_id: &str, path: &str) -> Result<()>;
+
     /// 保存强提示词原文,轮换时需要重新注入一次。
     async fn remember_prompt(&self, session_id: &str, prompt_block: &str) -> Result<()>;
 

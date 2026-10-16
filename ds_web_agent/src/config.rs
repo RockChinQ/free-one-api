@@ -93,7 +93,7 @@ impl Default for ConversationSettings {
             stable_secs: 3,
             poll_interval_ms: 500,
             send_retry: 1,
-            max_rounds_per_conversation: 12,
+            max_rounds_per_conversation: 30,
             min_wait_after_send_ms: 800,
         }
     }
@@ -115,8 +115,8 @@ pub struct AgentSettings {
 impl Default for AgentSettings {
     fn default() -> Self {
         Self {
-            max_rounds: 8,
-            max_rounds_limit: 24,
+            max_rounds: 16,
+            max_rounds_limit: 48,
             max_json_retries: 2,
             prompt_file: String::new(),
             record_text_limit: 4000,
@@ -156,9 +156,9 @@ impl Default for ContextSettings {
         Self {
             enabled: true,
             mode: TokenEstimateMode::CharsDiv4,
-            max_context_chars: 24_000,
-            reserve_chars: 4_000,
-            summary_max_chars: 1_200,
+            max_context_chars: 8_000_000,
+            reserve_chars: 200_000,
+            summary_max_chars: 2_400,
         }
     }
 }
@@ -693,9 +693,9 @@ mod tests {
 
     #[test]
     fn missing_max_rounds_is_clamped() {
-        let cfg = AppConfig::default(); // max_rounds=8, limit=24
-        assert_eq!(cfg.clamp_max_rounds(None), 8);
-        assert_eq!(cfg.clamp_max_rounds(Some(999)), 24);
+        let cfg = AppConfig::default(); // max_rounds=16, limit=48
+        assert_eq!(cfg.clamp_max_rounds(None), 16);
+        assert_eq!(cfg.clamp_max_rounds(Some(999)), 48);
         assert_eq!(cfg.clamp_max_rounds(Some(0)), 1);
     }
 

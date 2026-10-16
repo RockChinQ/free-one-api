@@ -391,6 +391,17 @@ impl ChatBackend for BrowserChatBackend {
         }
     }
 
+    async fn upload_file(&self, session_id: &str, path: &str) -> Result<()> {
+        {
+            let sessions = self.sessions.lock().await;
+            if !sessions.contains_key(session_id) {
+                return Err(AppError::SessionNotFound(session_id.to_string()));
+            }
+        }
+        self.guard_ready().await?;
+        self.browser.upload_file(path).await
+    }
+
     async fn remember_prompt(&self, session_id: &str, prompt_block: &str) -> Result<()> {
         let mut sessions = self.sessions.lock().await;
         let state = sessions
