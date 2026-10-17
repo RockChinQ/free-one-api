@@ -47,10 +47,8 @@ pub fn extract_json(text: &str) -> Result<(Value, ExtractStrategy)> {
     }
 
     // 1) 整段就是 JSON
-    if let Ok(value) = serde_json::from_str::<Value>(trimmed) {
-        if value.is_object() {
-            return Ok((value, ExtractStrategy::WholeText));
-        }
+    if let Some(value) = parse_object(trimmed) {
+        return Ok((value, ExtractStrategy::WholeText));
     }
 
     // 2) 代码块(优先认 type 字段,避免把示例 schema 当成答案)
@@ -67,11 +65,139 @@ pub fn extract_json(text: &str) -> Result<(Value, ExtractStrategy)> {
         return Ok(value);
     }
 
+    // 4) 引号修复后再扫一次:未转义的内层引号会把字符串状态带偏,原文里
+    //    配对的括号常常扫不出来,修复后的文本才恢复正常的括号配对。
+    let quoted = repair_json_quotes(trimmed);
+    if quoted != trimmed {
+        let balanced = balanced_objects(&quoted)
+            .into_iter()
+            .map(|(s, e)| (quoted[s..e].to_string(), ExtractStrategy::BalancedBrace));
+        if let Some(value) = pick_best(balanced) {
+            return Ok(value);
+        }
+    }
+
     Err(AppError::JsonParse(format!(
         "未能在输出中找到合法 JSON 对象(前 {} 字符:{})",
         RAW_ECHO_LIMIT.min(trimmed.len()),
         snippet(trimmed)
     )))
+}
+
+/// 解析一个候选 JSON 对象;直接解析失败时,先修复字符串里的裸控制字符再试,
+/// 再不行就修未转义的内层双引号。
+///
+/// 网页模型经常把 `final.content` 写成带真实换行的字符串,这不符合 JSON 规范,
+/// 但语义是明确的。把字符串内部的换行/制表符转义后即可正常解析;已经转义过的
+/// `\n` 不会被二次转义。写 `execute_code` 时还会把代码里的 `"..."` 原样塞进
+/// 字符串,由 [`repair_json_quotes`] 兜底。
+fn parse_object(raw: &str) -> Option<Value> {
+    let trimmed = raw.trim();
+    if let Ok(value) = serde_json::from_str::<Value>(trimmed) {
+        if value.is_object() {
+            return Some(value);
+        }
+    }
+    let repaired = repair_json_strings(trimmed);
+    if let Ok(value) = serde_json::from_str::<Value>(&repaired) {
+        if value.is_object() {
+            return Some(value);
+        }
+    }
+    let quoted = repair_json_quotes(&repaired);
+    if quoted != repaired {
+        if let Ok(value) = serde_json::from_str::<Value>(&quoted) {
+            if value.is_object() {
+                return Some(value);
+            }
+        }
+    }
+    None
+}
+
+/// 转义 JSON 字符串内部的裸控制字符,保留字符串外部的空白与已有转义序列。
+fn repair_json_strings(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len() + 16);
+    let mut in_string = false;
+    let mut escaped = false;
+    for ch in raw.chars() {
+        if !in_string {
+            if ch == '"' {
+                in_string = true;
+            }
+            out.push(ch);
+            continue;
+        }
+        if escaped {
+            out.push(ch);
+            escaped = false;
+            continue;
+        }
+        match ch {
+            '\\' => {
+                out.push(ch);
+                escaped = true;
+            }
+            '"' => {
+                out.push(ch);
+                in_string = false;
+            }
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// 转义 JSON 字符串内部未转义的双引号,保留真正的字符串结束引号。
+///
+/// 模型写 `execute_code` 时会把代码原文塞进 `"code":"..."`,代码里的
+/// `"http.server 8899"` 不转义就会提前结束字符串,后面的 `}` 被当成字符串内容,
+/// 整段再也扫不出配对的对象。判据:字符串里的 `"` 之后跳过空白若紧跟
+/// `,` `}` `]` `:` 才是结束引号,否则是内容,补上反斜杠。
+fn repair_json_quotes(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len() + 16);
+    let mut in_string = false;
+    let mut escaped = false;
+    for (i, ch) in raw.char_indices() {
+        if !in_string {
+            if ch == '"' {
+                in_string = true;
+            }
+            out.push(ch);
+            continue;
+        }
+        if escaped {
+            out.push(ch);
+            escaped = false;
+            continue;
+        }
+        match ch {
+            '\\' => {
+                out.push(ch);
+                escaped = true;
+            }
+            '"' if closes_string(&raw[i + 1..]) => {
+                out.push(ch);
+                in_string = false;
+            }
+            '"' => out.push_str("\\\""),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// 引号之后(跳过空白)是否是 JSON 结构符号,即这个引号能否结束字符串。
+fn closes_string(rest: &str) -> bool {
+    match rest.trim_start().chars().next() {
+        None => true,
+        Some(',' | '}' | ']' | ':') => true,
+        _ => false,
+    }
 }
 
 /// 在所有候选中优先选"带 type 字段且能识别"的那个,其次选任意对象。
@@ -82,12 +208,9 @@ where
     let mut first_object: Option<(Value, ExtractStrategy)> = None;
     let mut last_action: Option<(Value, ExtractStrategy)> = None;
     for (raw, strategy) in candidates {
-        let Ok(value) = serde_json::from_str::<Value>(raw.trim()) else {
+        let Some(value) = parse_object(&raw) else {
             continue;
         };
-        if !value.is_object() {
-            continue;
-        }
         if looks_like_action(&value) {
             // 出现多个 action-like 对象时,后面的通常是真答案——前面常是模型复述的协议示例
             last_action = Some((value, strategy));
@@ -280,6 +403,7 @@ pub fn correction_message(error: &str, raw: &str) -> String {
          错误:{error}\n\
          你上次的原文(可能被截断):\n{echo}\n\n\
          请只重新输出一个合法 JSON 对象,不要 Markdown、不要解释、不要多余文本。\n\
+         注意:字符串里的换行必须写成 \\n,不要输出裸换行;双引号必须写成 \\\"。\n\
          格式:{{\"type\":\"tool_call\",\"tool\":\"...\",\"arguments\":{{...}}}} \
          或 {{\"type\":\"final\",\"content\":\"...\"}}"
     )
@@ -351,6 +475,65 @@ mod tests {
             ModelAction::Final { content } => assert!(content.contains("含 } 和 {")),
             other => panic!("应为 final,实际 {other:?}"),
         }
+    }
+
+    #[test]
+    fn raw_newlines_inside_a_string_are_repaired() {
+        let text = "{\"type\":\"final\",\"content\":\"第一行\n第二行\"}";
+        let parsed = parse_action(text).unwrap();
+        match parsed.action {
+            ModelAction::Final { content } => assert_eq!(content, "第一行\n第二行"),
+            other => panic!("应为 final,实际 {other:?}"),
+        }
+    }
+
+    #[test]
+    fn raw_newlines_inside_a_balanced_object_are_repaired() {
+        let text = "说明\n{\"type\":\"final\",\"content\":\"a\nb\"}\n结束";
+        let parsed = parse_action(text).unwrap();
+        assert_eq!(parsed.strategy, ExtractStrategy::BalancedBrace);
+        match parsed.action {
+            ModelAction::Final { content } => assert_eq!(content, "a\nb"),
+            other => panic!("应为 final,实际 {other:?}"),
+        }
+    }
+
+    #[test]
+    fn repair_leaves_valid_escapes_untouched() {
+        let text = r#"{"type":"final","content":"a\nb \"q\""}"#;
+        assert_eq!(repair_json_strings(text), text);
+    }
+
+    #[test]
+    fn unescaped_quotes_inside_a_string_are_repaired() {
+        // 真实失败样本:模型把 shell 命令里的双引号原样写进了 JSON 字符串
+        let text = "{\"type\":\"tool_call\",\"tool\":\"execute_code\",\"arguments\":{\"code\":\"subprocess.run('pkill -f \"http.server 8899\"', shell=True)\\ntime.sleep(1)\"}}";
+        let parsed = parse_action(text).unwrap();
+        match parsed.action {
+            ModelAction::ToolCall { tool, arguments } => {
+                assert_eq!(tool, "execute_code");
+                let code = arguments["code"].as_str().unwrap();
+                assert!(code.contains("\"http.server 8899\""), "{code}");
+                assert!(code.contains("\ntime.sleep(1)"), "{code}");
+            }
+            other => panic!("应为 tool_call,实际 {other:?}"),
+        }
+    }
+
+    #[test]
+    fn unescaped_quotes_in_a_balanced_object_are_repaired() {
+        let text = "说明\n{\"type\":\"final\",\"content\":\"他说 \"你好\" 就走了\"}\n结束";
+        let parsed = parse_action(text).unwrap();
+        match parsed.action {
+            ModelAction::Final { content } => assert!(content.contains("\"你好\""), "{content}"),
+            other => panic!("应为 final,实际 {other:?}"),
+        }
+    }
+
+    #[test]
+    fn quote_repair_leaves_valid_json_untouched() {
+        let text = r#"{"type":"final","content":"a \"q\" b","arguments":{}}"#;
+        assert_eq!(repair_json_quotes(text), text);
     }
 
     #[test]

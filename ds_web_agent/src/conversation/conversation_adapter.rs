@@ -157,6 +157,16 @@ impl BrowserChatBackend {
                     );
                     return Ok(());
                 }
+                // 页面停在「继续生成」或还在思考:消息已经进去了,只是还没答完。
+                // 看成"没发出去"就会把同一段文本再发一遍,于是模型对同一内容回答两次。
+                if self.browser.resume_generation().await.unwrap_or(false) {
+                    warn!(attempt, "提交后页面停在「继续生成」:判定已发送,改为点继续,不重发");
+                    return Ok(());
+                }
+                if self.browser.is_thinking().await.unwrap_or(false) {
+                    debug!(attempt, "提交后页面正在思考:判定发送生效,不重发");
+                    return Ok(());
+                }
                 if Instant::now() >= deadline {
                     break;
                 }
@@ -173,25 +183,32 @@ impl BrowserChatBackend {
     }
 
     /// 等流式结束:先等到"停止生成"消失且出现新回复,再等文本连续稳定 `stable_secs`。
-    async fn wait_for_reply(&self, before_count: usize) -> Result<Reply> {
+    ///
+    /// 新回复不一定是"多出来一条":重复发送同一段内容时,网页可能原地更新最后一条
+    /// assistant 消息,DOM 里的条数不变。只看条数会一直等不到,所以文本从 `before_text`
+    /// 变成新内容同样算回复已到。
+    async fn wait_for_reply(&self, before_count: usize, before_text: &str) -> Result<Reply> {
         let started = Instant::now();
         let timeout = Duration::from_secs(self.cfg.conversation.reply_timeout_secs.max(5));
         let poll = self.poll_interval();
 
         let mut text;
+        let mut pauses = 0usize;
         loop {
             if started.elapsed() >= timeout {
                 return Err(self.reply_timeout(started.elapsed()).await);
             }
             let generating = self.browser.is_generating().await.unwrap_or(false);
             if !generating {
+                // 暂停在半路时停止按钮同样消失:先认出「继续生成」并点它,而不是当成答完
+                if self.resume_if_paused(&mut pauses).await? {
+                    continue;
+                }
                 let count = self.browser.assistant_message_count().await.unwrap_or(0);
-                if count > before_count {
-                    let current = self.browser.last_assistant_text().await?.unwrap_or_default();
-                    if !current.trim().is_empty() {
-                        text = current;
-                        break;
-                    }
+                let current = self.browser.last_assistant_text().await?.unwrap_or_default();
+                if Self::reply_arrived(before_count, before_text, count, &current) {
+                    text = current;
+                    break;
                 }
             }
             tokio::time::sleep(poll).await;
@@ -215,6 +232,11 @@ impl BrowserChatBackend {
                 continue;
             }
             if !generating && stable_since.elapsed() >= stable {
+                // 收尾前再确认一次:停在「继续生成」上说明这半句话还没写完
+                if self.resume_if_paused(&mut pauses).await? {
+                    stable_since = Instant::now();
+                    continue;
+                }
                 break;
             }
         }
@@ -251,6 +273,33 @@ impl BrowserChatBackend {
         })
     }
 
+/// 这一轮回复是否已经出现在页面上。
+///
+/// 两种完成形态都要认:
+/// - 条数增加:网页追加了一条新的 assistant 消息;
+/// - 条数不变但最后一条文本变了:网页原地更新了最后一条(重复发送同一段内容时会这样)。
+fn reply_arrived(before_count: usize, before_text: &str, count: usize, current: &str) -> bool {
+    let current = current.trim();
+    !current.is_empty() && (count > before_count || current != before_text.trim())
+}
+
+    /// 页面停在「继续生成」上就点一下,返回是否点过。
+    ///
+    /// 暂停时停止按钮消失、回复只写了一半:不做这件事就会被当成"回答结束"(交回半句话)
+    /// 或"没发出去"(重发同一条消息)。次数有上限,避免页面反复暂停把一轮拖死。
+    async fn resume_if_paused(&self, pauses: &mut usize) -> Result<bool> {
+        const MAX_RESUMES: usize = 5;
+        if *pauses >= MAX_RESUMES {
+            return Ok(false);
+        }
+        if !self.browser.resume_generation().await.unwrap_or(false) {
+            return Ok(false);
+        }
+        *pauses += 1;
+        warn!(resumed = *pauses, "页面停在生成中途,已点「继续生成」接着等");
+        Ok(true)
+    }
+
     async fn reply_timeout(&self, elapsed: Duration) -> AppError {
         let shot = self
             .browser
@@ -279,8 +328,13 @@ impl BrowserChatBackend {
     ) -> Result<Reply> {
         self.guard_ready().await?;
         let before_count = self.browser.assistant_message_count().await?;
+        let before_text = self
+            .browser
+            .last_assistant_text()
+            .await?
+            .unwrap_or_default();
         self.type_and_submit(text, before_count).await?;
-        let reply = self.wait_for_reply(before_count).await?;
+        let reply = self.wait_for_reply(before_count, &before_text).await?;
 
         let mut sessions = self.sessions.lock().await;
         let state = sessions
@@ -533,6 +587,16 @@ impl ChatBackend for BrowserChatBackend {
 mod tests {
     use super::*;
 
+    /// 网页原地更新最后一条回复时,条数不变但文本变了,必须算回复已到。
+    #[test]
+    fn in_place_reply_update_counts_as_a_new_reply() {
+        assert!(BrowserChatBackend::reply_arrived(4, "old", 4, "new"));
+        assert!(!BrowserChatBackend::reply_arrived(4, "old", 4, "old"));
+        assert!(!BrowserChatBackend::reply_arrived(4, "old", 4, "  old  "));
+        assert!(BrowserChatBackend::reply_arrived(4, "old", 5, "old"));
+        assert!(!BrowserChatBackend::reply_arrived(0, "", 0, ""));
+    }
+
     #[test]
     fn conversation_ids_are_unique_and_traceable() {
         let a = BrowserChatBackend::new_conversation_id();
@@ -579,6 +643,45 @@ mod tests {
             browser.submitted(),
             vec!["首条消息".to_string()],
             "页面已有新回复说明消息确实发出去了,不能再重发一遍"
+        );
+    }
+
+    /// 页面在思考中途暂停(出现「继续生成」)时要接着点继续,而不是把同一条消息重发一遍。
+    /// 真实故障:暂停时停止按钮消失、回复只写了半截,于是被判成"没发出去"并重发。
+    #[tokio::test]
+    async fn paused_generation_is_resumed_instead_of_resent() {
+        let mut cfg = AppConfig::default();
+        cfg.conversation.poll_interval_ms = 50;
+        cfg.conversation.stable_secs = 1;
+        cfg.conversation.reply_timeout_secs = 10;
+        let model = cfg.models.default_variant().expect("默认变体存在").clone();
+
+        // 提交后输入框内容还在 + 页面停在「继续生成」:两条判据都指向"看起来没发出去"
+        let browser = Arc::new(crate::testing::NoopBrowser::new(vec![
+            r#"{"type":"final","content":"ok"}"#,
+        ]));
+        browser
+            .keep_input_after_submit
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+        browser
+            .paused
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+
+        let backend = BrowserChatBackend::new(browser.clone(), Arc::new(cfg));
+        let (_, reply) = backend
+            .start("sess-pause", "首条消息", &model)
+            .await
+            .expect("点继续之后应当拿到回复");
+
+        assert_eq!(reply.text, r#"{"type":"final","content":"ok"}"#);
+        assert_eq!(
+            browser.submitted(),
+            vec!["首条消息".to_string()],
+            "暂停时不能把同一条消息再发一遍"
+        );
+        assert!(
+            browser.resumes.load(std::sync::atomic::Ordering::SeqCst) >= 1,
+            "应当点过「继续生成」"
         );
     }
 

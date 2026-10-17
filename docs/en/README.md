@@ -46,6 +46,7 @@ Want the DeepSeek web edition (no cookie needed, driven through a real browser)?
 | xw5xr6/revTongYi | ✅ | ✅ | ❌ | Aliyun TongYi QianWen web edition |
 | Zai-Kun/reverse-engineered-chatgpt | ✅ | ✅ | ❌ | ChatGPT web edition (newer) |
 | ds-webagent/deepseek-web | ✅ | ✅ | ✅ | DeepSeek web edition driven by the bundled DS_WebAgent (Rust + real browser), no cookie required |
+| aeliusai/aelius-web | ✅ | ✅ | ❌ | Reverse-proxies the aeliusai.com/chat web chat; guest session by default, no cookie needed |
 
 ## Supported API paths
 

@@ -68,6 +68,13 @@ pub trait BrowserAdapter: Send + Sync {
     async fn upload_file(&self, path: &str) -> Result<()>;
 
     async fn is_generating(&self) -> Result<bool>;
+    /// 页面暂停在生成中途时点「继续生成」:点了返回 true,页面没暂停就返回 false。
+    ///
+    /// 网页版在思考或生成中途掉线时会停在那里,等用户点继续才接着写。暂停时停止按钮同样消失,
+    /// 只看 [`BrowserAdapter::is_generating`] 会把它当成"已经答完"或"根本没发出去"。
+    async fn resume_generation(&self) -> Result<bool>;
+    /// 页面是否正在显示思考过程(思考块)。只用于发送确认阶段区分"还在想"和"没发出去"。
+    async fn is_thinking(&self) -> Result<bool>;
     async fn assistant_message_count(&self) -> Result<usize>;
     async fn last_assistant_text(&self) -> Result<Option<String>>;
     /// 与 [`BrowserAdapter::last_assistant_text`] 同一节点,但**不剔除思考过程**。
@@ -607,6 +614,41 @@ impl BrowserAdapter for ChromiumoxideAdapter {
         Ok(self.resolve(&self.selectors.stop_button).await?.is_some())
     }
 
+    async fn resume_generation(&self) -> Result<bool> {
+        if self
+            .selectors
+            .continue_button
+            .iter()
+            .all(|s| s.trim().is_empty())
+        {
+            return Ok(false);
+        }
+        let resolved = match self.resolve(&self.selectors.continue_button).await? {
+            Some(resolved) => resolved,
+            None => return Ok(false),
+        };
+        let clicked = resolved.element.click().await;
+        self.release(&resolved).await;
+        clicked.map_err(AppError::browser)?;
+        info!("页面停在生成中途:已点「继续生成」");
+        Ok(true)
+    }
+
+    async fn is_thinking(&self) -> Result<bool> {
+        if self
+            .selectors
+            .thinking_indicator
+            .iter()
+            .all(|s| s.trim().is_empty())
+        {
+            return Ok(false);
+        }
+        Ok(self
+            .resolve(&self.selectors.thinking_indicator)
+            .await?
+            .is_some())
+    }
+
     async fn assistant_message_count(&self) -> Result<usize> {
         let sel = SelectorConfig::js_array(&self.selectors.assistant_message);
         let js = JS_COUNT.replace("__SELECTORS__", &sel);
@@ -789,14 +831,18 @@ const JS_RESOLVE: &str = r#"(function(){
     catch(e) { return !!el; }
   }
   function byText(t){
+    // 取最后一个命中:querySelectorAll 按文档序返回,后代排在祖先后面。
+    // 同文本的祖先 div 很常见(它只包着一个按钮),而点祖先不会触发里层按钮的处理器,
+    // 所以要点最里层那个。
+    var hit = null;
     var all = document.querySelectorAll('button,a,[role="button"],div');
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
       if (!vis(el)) continue;
       var txt = (el.innerText || el.textContent || '').trim();
-      if (txt === t) return el;
+      if (txt === t) hit = el;
     }
-    return null;
+    return hit;
   }
   function q(sel){
     if (sel.indexOf('text=') === 0) return byText(sel.slice(5));

@@ -24,6 +24,7 @@ from .adapter import hugchat
 from .adapter import qianwen
 from .adapter import re_gpt
 from .adapter import ds_web_agent
+from .adapter import aelius
 
 from . import log
 from . import cfg as cfgutil

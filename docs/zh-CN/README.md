@@ -47,6 +47,7 @@ curl http://localhost:3000/v1/chat/completions \
 | xw5xr6/revTongYi | ✅ | ✅ | ❌ | 阿里云通义千问网页版 |
 | Zai-Kun/reverse-engineered-chatgpt | ✅ | ✅ | ❌ | ChatGPT 网页版（较新） |
 | ds-webagent/deepseek-web | ✅ | ✅ | ✅ | 本仓库自带 DS_WebAgent（Rust + 真实浏览器）驱动的 DeepSeek 网页版，无需 cookie |
+| aeliusai/aelius-web | ✅ | ✅ | ❌ | 反代 aeliusai.com/chat 网页对话,默认游客身份,无需 Cookie |
 
 ## 支持的 API 路径
 

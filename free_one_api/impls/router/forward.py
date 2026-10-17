@@ -84,12 +84,21 @@ class ForwardAPIGroup(routergroup.APIGroup):
         
         @self.api("/v1/models", ["GET"], auth=True)
         async def list_models():
-            """List available models (OpenAI compatible)."""
-            models = [
-                "ds-web-search",
-                "ds-web-think",
-                "ds-web-search-think",
-            ]
+            """List available models (OpenAI compatible).
+
+            模型名来自已启用渠道:model_mapping 的键(客户端请求名)与适配器
+            supported_models()。不要在适配器旁再维护一份写死的清单。
+            """
+            models: list[str] = []
+            for chan in await self.chanmgr.list_channels():
+                if not chan.enabled:
+                    continue
+                if chan.adapter.supported_path() != "/v1/chat/completions":
+                    continue
+                for model in list(chan.model_mapping.keys()) + list(chan.adapter.supported_models()):
+                    if model and model not in models:
+                        models.append(model)
+            models.sort()
             return quart.jsonify({
                 "object": "list",
                 "data": [

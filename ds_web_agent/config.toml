@@ -194,6 +194,21 @@ stop_button = [
   "[data-testid='stop-button']",
   "div[class*='stop-generating']",
 ]
+# 页面在思考/生成中途掉线时会停下来等用户点「继续生成」。认不出这个按钮,就会把暂停
+# 当成"已经答完"(交回半句话)或"没发出去"(重发同一条消息)。
+# text=xxx 是按可见文本精确匹配,优先于 class —— DeepSeek 的 class 带构建哈希。
+continue_button = [
+  "text=继续生成",
+  "text=Continue generating",
+  "text=Continue",
+  "div[role='button'][class*='continue']",
+  "button[class*='continue']",
+]
+# 思考中标志:只用于发送确认阶段判断"消息确实进去了、正在想",不参与正文提取
+thinking_indicator = [
+  "div[class*='thinking']",
+  "div[class*='reasoning']",
+]
 
 # ── 文件/图片上传 ──
 # 上传按钮(附件/图片图标),点击后触发文件选择器

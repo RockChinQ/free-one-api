@@ -46,6 +46,11 @@ pub struct NoopBrowser {
     /// 模拟"回复已经渲染、输入框内容却迟迟不清空"的真实中间态:置位后 `submit` 故意保留输入框内容,
     /// 用于验证发送生效判据不会因此误判成失败并重发。
     pub keep_input_after_submit: AtomicBool,
+    /// 模拟"页面在思考中途暂停(出现「继续生成」)":置位后 `submit` 先不产出回复,
+    /// 要等 `resume_generation` 被调用才补上,用于验证暂停时点的是继续而不是重发。
+    pub paused: AtomicBool,
+    /// `resume_generation` 真的点到按钮的次数
+    pub resumes: AtomicUsize,
 }
 
 impl NoopBrowser {
@@ -135,6 +140,10 @@ impl BrowserAdapter for NoopBrowser {
         if !self.keep_input_after_submit.load(Ordering::SeqCst) {
             self.buffer.lock().unwrap().clear();
         }
+        if self.paused.load(Ordering::SeqCst) {
+            // 暂停中:回复要等点了「继续生成」才产出
+            return Ok(());
+        }
         let reply = self.next_reply();
         *self.last_reply.lock().unwrap() = Some(reply);
         self.assistant_count.fetch_add(1, Ordering::SeqCst);
@@ -146,6 +155,21 @@ impl BrowserAdapter for NoopBrowser {
     }
 
     async fn is_generating(&self) -> Result<bool> {
+        Ok(false)
+    }
+
+    async fn resume_generation(&self) -> Result<bool> {
+        if !self.paused.swap(false, Ordering::SeqCst) {
+            return Ok(false);
+        }
+        self.resumes.fetch_add(1, Ordering::SeqCst);
+        let reply = self.next_reply();
+        *self.last_reply.lock().unwrap() = Some(reply);
+        self.assistant_count.fetch_add(1, Ordering::SeqCst);
+        Ok(true)
+    }
+
+    async fn is_thinking(&self) -> Result<bool> {
         Ok(false)
     }
 

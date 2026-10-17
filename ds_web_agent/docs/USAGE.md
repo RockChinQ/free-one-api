@@ -376,6 +376,9 @@ JSON 文本——桥接只在**外层**强制 `{"type":"final","content":...}` �
 - 估算上下文超过 `[context].max_context_chars - reserve_chars`,或超过
   `[conversation].max_rounds_per_conversation` 轮,就自动点「新对话」,在新对话首条消息里重新注入
   强提示词 + 历史摘要 + 当前任务状态,然后继续。
+- 网页在思考或生成中途掉线时会停在那里等用户点「继续生成」:桥接会自己点它接着等,
+  既不会把半句话当成答案收尾,也不会因为"看起来没在生成"把同一条消息重发(一轮最多点 5 次)。
+  按钮文案变了就改 `[selectors].continue_button`,首项 `text=继续生成` 是按可见文本精确匹配。
 - token 估算模式由 `[context].mode` 决定(`chars_div4` 或 `cjk_aware`)。
 - 强提示词可用 `[agent].prompt_file` 指向外部模板覆盖,模板必须保留
   `{{tools_json}}`、`{{model_mode}}`、`{{environment}}` 三处占位符。
@@ -401,6 +404,7 @@ JSON 文本——桥接只在**外层**强制 `{"type":"final","content":...}` �
 | `/health` 一直 `login_required` | 在浏览器窗口里手动登录;若已登录仍报此状态,访问 `GET /v1/diag` 看真实 URL 与元素 HTML,然后改 `[selectors]` 里的 `not_logged_in_url_markers` / `logged_in_url_markers` / `login_input` |
 | `/health` 一直 `starting` | 页面还在加载或选择器漂移;同样看 `/v1/diag`,对照 `[selectors].chat_input` |
 | 报错 `reply_timeout`(等待回复超时) | 网页没在 `[conversation].reply_timeout_secs` 内产出"稳定新回复"。截图存于 `logs/screenshots/`;可调大超时或 `stable_secs` |
+| 同一条消息在网页里出现两次 / 回答只写了半句话就结束 | 网页在生成中途暂停(停在「继续生成」)或一直停在思考态。桥接会自己点继续并拒绝重发;仍出现时看 `[selectors].continue_button` / `thinking_indicator` 是否命中,`GET /v1/diag` 能看到真实元素 HTML |
 | 日志出现 `未找到开关,按页面当前状态继续` | `[selectors].toggle_search` / `toggle_think` 没匹配上,当前对话会沿用页面上的开关状态 |
 | 启动报找不到 Chrome | 设置 `DSWA_CHROME_EXECUTABLE` 或 `[browser].chrome_executable` |
 | 端口被占用 | 改 `[server].port` 或 `DSWA_PORT` |

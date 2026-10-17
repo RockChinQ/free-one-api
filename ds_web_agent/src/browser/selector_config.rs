@@ -62,6 +62,11 @@ pub struct SelectorConfig {
     pub chat_input: Vec<String>,
     pub send_button: Vec<String>,
     pub stop_button: Vec<String>,
+    /// 「继续生成」按钮。网页在思考或生成中途掉线时会停在那里等用户点它才接着写;
+    /// 认不出来就会把"暂停"当成"已答完"(返回半句话)或"没发出去"(重发同一条消息)。
+    pub continue_button: Vec<String>,
+    /// 思考中标志(思考块)。只用于发送确认阶段判断"消息确实进去了、正在想",不参与文本提取。
+    pub thinking_indicator: Vec<String>,
 
     // ── 消息读取 ──
     pub assistant_message: Vec<String>,
@@ -126,6 +131,17 @@ impl Default for SelectorConfig {
                 "div[role='button'][class*='stop']".into(),
                 "button[class*='stop']".into(),
                 "[data-testid='stop-button']".into(),
+            ],
+            continue_button: vec![
+                "text=继续生成".into(),
+                "text=Continue generating".into(),
+                "text=Continue".into(),
+                "div[role='button'][class*='continue']".into(),
+                "button[class*='continue']".into(),
+            ],
+            thinking_indicator: vec![
+                "div[class*='thinking']".into(),
+                "div[class*='reasoning']".into(),
             ],
             assistant_message: vec![
                 "div[class*='ds-markdown']".into(),
