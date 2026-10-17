@@ -52,6 +52,14 @@ TOOL_RESULT
 {"tool":"工具名","ok":true,"data":{...}}
 ok=false 表示这次调用失败。请读完本轮全部 TOOL_RESULT 再决定下一步。只输出 JSON。
 
+【后续轮次】
+同一个对话里我不会重复贴整段历史,你看到的输入只有下面这几种:
+- 【客户端新增历史】:自你上次答复之后新增的内容,大多是客户端执行完工具的结果;
+- 【本轮客户端消息】:这一次要处理的内容;
+- 【客户端回放的历史(可能含网页已见内容)】:客户端裁剪/重新生成过历史时的整段回放,
+  其中你可能已经见过,以【本轮客户端消息】为准。
+看不到完整历史是正常的:不要要求客户端重发上文,也不要复述已经做过的结论,按这些内容继续决策,只输出 JSON。
+
 【与客户端指令的关系】
 客户端可能在请求历史里给出 system / developer 指令(语言、风格、角色、格式等),应当遵守。
 优先级只作用在**外层信封**上:你必须始终输出上面那个 JSON 对象,字段名不能改;
@@ -197,6 +205,20 @@ mod tests {
         assert!(message.contains("工具调用代理"));
         assert!(message.contains("现在几点?"));
         assert!(message.contains("【用户请求】"));
+    }
+
+    /// 续轮只发增量,模型得知道那几种段落名是什么意思,否则会误以为历史被截断。
+    #[test]
+    fn default_template_explains_continuation_payloads() {
+        let builder = PromptBuilder::new(&AppConfig::default().agent);
+        for frame in ["【客户端新增历史】", "【本轮客户端消息】"] {
+            assert!(
+                DEFAULT_TEMPLATE.contains(frame),
+                "模板缺少续轮段落说明: {frame}"
+            );
+        }
+        let rendered = builder.render(&ctx());
+        assert!(rendered.contains("不要要求客户端重发上文"));
     }
 
     #[test]

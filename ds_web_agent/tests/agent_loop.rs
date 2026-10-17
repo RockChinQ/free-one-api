@@ -40,6 +40,8 @@ fn build_run(input: &str, tools: &[&str], max_rounds: usize) -> AgentRun {
     AgentRun {
         session_id: None,
         input: input.into(),
+        transcript: String::new(),
+        anchor: input.into(),
         tools: tools.iter().map(|s| s.to_string()).collect(),
         client_tools: Vec::new(),
         max_rounds,

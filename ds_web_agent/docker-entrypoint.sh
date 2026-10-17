@@ -11,7 +11,12 @@ mkdir -p /data/logs /data/browser-profile
 # 容器被 restart/kill 后 Xvfb 的 lock 与 socket 会残留(不在挂载卷),
 # 不清掉的话新 Xvfb 会报 Server is already active for display 99 直接退出,
 # 之后 Chromium 连不上 DISPLAY 就启动失败。启动前先清残留。
-rm -f "/tmp/.X{DISPLAY#:}-lock" "/tmp/.X11-unix/X${DISPLAY#:}"
+rm -f "/tmp/.X${DISPLAY#:}-lock" "/tmp/.X11-unix/X${DISPLAY#:}"
+
+# Chromium 的 profile 锁同理:它把"主机名-pid"写进 SingletonLock,容器重建后主机名变了,
+# 旧锁就被当成"另一台机器上的 Chromium 还在用这个 profile",于是弹 Unlock Profile 对话框
+# 而不启动,API 一直 503(BrowserNotReady)。这个卷只给本容器用,启动前直接清掉。
+rm -f /data/browser-profile/Singleton*
 
 # 虚拟显示:DS_WebAgent 强制有头模式,容器里没有物理屏幕,所以必须有 Xvfb
 Xvfb "$DISPLAY" -screen 0 "${DSWA_SCREEN:-1440x900x24}" -nolisten tcp &

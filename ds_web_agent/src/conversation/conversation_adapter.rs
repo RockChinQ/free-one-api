@@ -14,8 +14,55 @@ use tracing::{debug, info, warn};
 
 use crate::browser::{BrowserAdapter, LoginState};
 use crate::config::{AppConfig, ModelVariant};
-use crate::conversation::{ChatBackend, Reply, SessionRecord, SessionState};
+use crate::conversation::{ChatBackend, ClientTurn, Reply, SessionRecord, SessionState};
 use crate::error::{AppError, Result};
+
+/// 在候选会话里挑出该沿用的那个(纯函数,便于用单元测试锁死判据)。
+///
+/// 三个条件缺一不可:
+/// 1. 模型一致——搜索/思考开关是按网页对话生效的,换模型就应当新开对话;
+/// 2. 客户端历史里回放着我们上一轮的答复——要么整段前缀都对得上(客户端按原样回放),
+///    要么历史以那一行答复结尾;
+/// 3. 还得确认就是这一条对话:历史接得上,或者锚点(第一条 user 消息)一致。
+///    对不上宁可新开对话重新注入,也不要把消息串进别人的对话里。
+pub(crate) fn affinity_match<'a>(
+    sessions: impl Iterator<Item = &'a SessionState>,
+    anchor: &str,
+    transcript: &str,
+    model_id: &str,
+) -> Option<&'a SessionState> {
+    let tail = transcript.trim_end();
+    let anchor = anchor.trim();
+    let mut best: Option<(&SessionState, (u8, u8))> = None;
+
+    for state in sessions.filter(|s| s.model_id == model_id) {
+        let client = &state.client;
+        let answer = client.answer_line.trim();
+        let known = client.known_prefix();
+        let prefix_aligned = !known.is_empty() && tail.starts_with(&known);
+        let answer_aligned = !answer.is_empty() && tail.ends_with(answer);
+        if !prefix_aligned && !answer_aligned {
+            continue;
+        }
+        let anchor_aligned = !anchor.is_empty() && client.anchor == anchor;
+        if !prefix_aligned && !anchor_aligned {
+            continue;
+        }
+        let score = (prefix_aligned as u8, anchor_aligned as u8);
+        let better = match best {
+            None => true,
+            Some((current, current_score)) => {
+                score > current_score
+                    || (score == current_score && state.last_active > current.last_active)
+            }
+        };
+        if better {
+            best = Some((state, score));
+        }
+    }
+
+    best.map(|(state, _)| state)
+}
 
 pub struct BrowserChatBackend {
     browser: Arc<dyn BrowserAdapter>,
@@ -411,6 +458,34 @@ impl ChatBackend for BrowserChatBackend {
         Ok(())
     }
 
+    async fn match_session(
+        &self,
+        anchor: &str,
+        transcript: &str,
+        model_id: &str,
+    ) -> Result<Option<String>> {
+        let sessions = self.sessions.lock().await;
+        Ok(affinity_match(sessions.values(), anchor, transcript, model_id)
+            .map(|state| state.session_id.clone()))
+    }
+
+    async fn client_turn(&self, session_id: &str) -> Result<ClientTurn> {
+        let sessions = self.sessions.lock().await;
+        sessions
+            .get(session_id)
+            .map(|state| state.client.clone())
+            .ok_or_else(|| AppError::SessionNotFound(session_id.to_string()))
+    }
+
+    async fn remember_client_turn(&self, session_id: &str, turn: ClientTurn) -> Result<()> {
+        let mut sessions = self.sessions.lock().await;
+        let state = sessions
+            .get_mut(session_id)
+            .ok_or_else(|| AppError::SessionNotFound(session_id.to_string()))?;
+        state.record_client_turn(turn);
+        Ok(())
+    }
+
     async fn conversation_id(&self, session_id: &str) -> Result<String> {
         let sessions = self.sessions.lock().await;
         sessions
@@ -505,5 +580,112 @@ mod tests {
             vec!["首条消息".to_string()],
             "页面已有新回复说明消息确实发出去了,不能再重发一遍"
         );
+    }
+
+    /// 造一条会话(模型与客户端可见状态给定)。
+    fn session_with(id: &str, model: &str, turn: ClientTurn) -> SessionState {
+        let mut state = SessionState::new(id, "cvt-1", model);
+        state.record_client_turn(turn);
+        state
+    }
+
+    fn turn(anchor: &str, transcript: &str, input_line: &str, answer: &str) -> ClientTurn {
+        ClientTurn {
+            anchor: anchor.into(),
+            transcript: transcript.into(),
+            input_line: input_line.into(),
+            answer_line: answer.into(),
+        }
+    }
+
+    /// 沿用判据:同模型 + 客户端历史里回放着我们的答复 + (整段前缀对齐或锚点一致)。
+    #[test]
+    fn affinity_requires_replayed_answer_and_matching_anchor() {
+        let states = [
+            session_with(
+                "sess-a",
+                "ds-web",
+                turn("北京天气怎么样", "", "user: 北京天气怎么样", "assistant: 晴"),
+            ),
+            session_with(
+                "sess-b",
+                "ds-web",
+                turn("另一件事", "", "user: 另一件事", "assistant: 好的"),
+            ),
+        ];
+        let hit = |anchor: &str, transcript: &str, model: &str| {
+            affinity_match(states.iter(), anchor, transcript, model).map(|s| s.session_id.clone())
+        };
+
+        assert_eq!(
+            hit(
+                "北京天气怎么样",
+                "user: 北京天气怎么样\nassistant: 晴",
+                "ds-web"
+            ),
+            Some("sess-a".to_string()),
+            "回放了我们上一轮往返的请求应当沿用同一对话"
+        );
+        assert_eq!(
+            hit("北京天气怎么样", "…\nassistant: 晴", "ds-web-search"),
+            None,
+            "换了模型:搜索/思考开关是按对话生效的,应该新开对话"
+        );
+        assert_eq!(
+            hit("全新的问题", "user: 全新的问题", "ds-web"),
+            None,
+            "历史里没有回放我们的答复(客户端开了新聊天):应当新建对话"
+        );
+    }
+
+    /// 两条会话的答复文本相同时,靠"整段前缀对齐"选出真正的那条。
+    #[test]
+    fn affinity_prefers_the_session_whose_history_lines_up() {
+        let states = [
+            session_with(
+                "sess-old",
+                "ds-web",
+                turn("重复的问题", "", "user: 重复的问题", "assistant: ok"),
+            ),
+            session_with(
+                "sess-new",
+                "ds-web",
+                turn(
+                    "重复的问题",
+                    "user: 重复的问题\nassistant: ok",
+                    "user: 又一遍",
+                    "assistant: ok",
+                ),
+            ),
+        ];
+        let hit = affinity_match(
+            states.iter(),
+            "重复的问题",
+            "user: 重复的问题\nassistant: ok",
+            "ds-web",
+        );
+        assert_eq!(hit.map(|s| s.session_id.as_str()), Some("sess-old"));
+    }
+
+    /// 客户端裁剪/改写过历史后,前缀与锚点都对不上:宁可选不中(新建对话),不能串到别人的对话里。
+    #[test]
+    fn affinity_declines_when_history_does_not_line_up() {
+        let states = [session_with(
+            "sess-a",
+            "ds-web",
+            turn(
+                "很早以前的问题",
+                "user: 很早以前的问题\nassistant: 好",
+                "user: 追问",
+                "assistant: 好",
+            ),
+        )];
+        let hit = affinity_match(
+            states.iter(),
+            "被裁剪后的新开头",
+            "user: 被裁剪后的新开头\nassistant: 好",
+            "ds-web",
+        );
+        assert!(hit.is_none(), "对不上就该新建对话重新注入强提示词");
     }
 }

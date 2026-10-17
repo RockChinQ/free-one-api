@@ -189,7 +189,8 @@ pub struct OpenAiChatRequest {
     pub tools: Option<Value>,
     /// `"none"` 本轮不给工具;`"auto"` / `"required"` 给全部声明;`{"type":"function",...}` 只给指定函数
     pub tool_choice: Option<Value>,
-    /// 桥梁扩展:沿用同一条网页对话(省略则每次新建对话;标准客户端本来就不需要它)
+    /// 桥梁扩展:显式沿用某条网页对话。省略时桥接会按客户端回放的历史自动沿用同一对话,
+    /// 只有识别成"另一条客户端对话"时才新建网页对话(标准客户端不需要关心它)
     pub session_id: Option<String>,
     /// 桥梁扩展:单个请求最多几轮工具调用
     pub max_rounds: Option<usize>,
@@ -323,6 +324,71 @@ pub fn openai_turns(messages: &[OpenAiMessage]) -> Option<(String, String)> {
     let last_user = messages.iter().rposition(|m| m.role == "user")?;
     let input = messages[last_user].text();
     Some((render_transcript(&messages[..last_user]), input))
+}
+
+/// 本轮输入在客户端历史里的渲染行:user 消息 → `user: …`,末尾的 tool 结果 → 各自的 `tool …` 行。
+///
+/// 它和 [`assistant_replay_line`] 一起构成 [`ClientTurn`](crate::conversation::ClientTurn)
+/// 的"已知前缀":客户端下一轮就是把这些行追加到历史里再发回来的。
+pub fn input_history_line(messages: &[OpenAiMessage]) -> String {
+    let Some(last) = messages.len().checked_sub(1) else {
+        return String::new();
+    };
+    if messages[last].role == "tool" {
+        let mut start = last;
+        while start > 0 && messages[start - 1].role == "tool" {
+            start -= 1;
+        }
+        return messages[start..]
+            .iter()
+            .map(render_tool_result)
+            .collect::<Vec<_>>()
+            .join("\n");
+    }
+    messages
+        .iter()
+        .rposition(|m| m.role == "user")
+        .map(|index| format!("user: {}", messages[index].text().trim()))
+        .unwrap_or_default()
+}
+
+/// 客户端对话的锚点:历史里第一条 user 消息(截断后保存)。
+///
+/// 客户端开新聊天时它会变,所以能拿来区分"同一条对话"和"另一个聊天"。
+/// 客户端裁剪过旧历史时锚点会丢,那时靠"客户端回放的历史能否接上"兜底。
+pub fn conversation_anchor(messages: &[OpenAiMessage]) -> String {
+    const ANCHOR_MAX_CHARS: usize = 400;
+    messages
+        .iter()
+        .find(|m| m.role == "user")
+        .map(|m| m.text().trim().chars().take(ANCHOR_MAX_CHARS).collect())
+        .unwrap_or_default()
+}
+
+/// 我们上一轮交给客户端的 assistant 消息,在客户端回放历史时的渲染行。
+///
+/// 必须与 [`render_transcript`] 逐字一致:下一轮就是靠"客户端历史以它结尾"判断该沿用
+/// 同一个网页对话;渲染方式一变,判据就失效(表现为每轮都新建对话、重复注入强提示词)。
+pub fn assistant_replay_line(content: &str, tool_call: Option<(&str, &str)>) -> String {
+    let calls = tool_call.map(|(name, arguments)| {
+        serde_json::json!([{
+            "type": "function",
+            "function": { "name": name, "arguments": arguments },
+        }])
+    });
+    let calls = calls.as_ref().map(render_tool_calls).unwrap_or_default();
+    let text = content.trim();
+    let body = match (text.is_empty(), calls.is_empty()) {
+        (true, true) => String::new(),
+        (false, true) => text.to_string(),
+        (true, false) => format!("调用工具 {calls}"),
+        (false, false) => format!("{text};调用工具 {calls}"),
+    };
+    if body.is_empty() {
+        String::new()
+    } else {
+        format!("assistant: {body}")
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -609,6 +675,53 @@ mod tests {
             name: None,
         }];
         assert!(split_openai_messages(&messages).is_none());
+        assert!(conversation_anchor(&messages).is_empty());
+    }
+
+    /// 锚点是历史里第一条 user 消息:它变了就说明客户端换了一条对话。
+    #[test]
+    fn anchor_is_the_first_user_message() {
+        let message = |role: &str, text: &str| OpenAiMessage {
+            role: role.into(),
+            content: Value::String(text.into()),
+            tool_calls: None,
+            tool_call_id: None,
+            name: None,
+        };
+        let messages = vec![
+            message("system", "你是助手"),
+            message("user", "第一问"),
+            message("assistant", "第一答"),
+            message("user", "第二问"),
+        ];
+        assert_eq!(conversation_anchor(&messages), "第一问");
+    }
+
+    /// 沿用判据的关键一环:`assistant_replay_line` 必须等于客户端回放这条消息后
+    /// `render_transcript` 渲染出来的那一行,否则每轮都会认不出"这是同一个对话"。
+    #[test]
+    fn assistant_replay_line_matches_transcript_rendering() {
+        let assistant = |content: Value, tool_calls: Option<Value>| OpenAiMessage {
+            role: "assistant".into(),
+            content,
+            tool_calls,
+            tool_call_id: None,
+            name: None,
+        };
+
+        let plain = vec![assistant(Value::String("第一答".into()), None)];
+        assert_eq!(render_transcript(&plain), assistant_replay_line("第一答", None));
+
+        let calls = serde_json::json!([{
+            "id": "call_1",
+            "type": "function",
+            "function": { "name": "get_weather", "arguments": r#"{"city":"北京"}"# },
+        }]);
+        let with_calls = vec![assistant(Value::Null, Some(calls))];
+        assert_eq!(
+            render_transcript(&with_calls),
+            assistant_replay_line("", Some(("get_weather", r#"{"city":"北京"}"#)))
+        );
     }
 
     #[test]

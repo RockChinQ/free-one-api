@@ -1,7 +1,9 @@
 //! AgentLoop:一轮一轮地"发消息 → 解析 JSON → 执行工具 → 回填结果",直到 `final` 或超限。
 //!
 //! 不变量(改动本文件时必须保持):
-//! 1. **同一对话内强提示词默认只注入一次**——`start()` 和 `rotate()` 的首条消息带它,
+//! 1. **同一对话内强提示词默认只注入一次**——`start()` 和 `rotate()` 的首条消息带它;
+//!    跨请求也算同一个对话:客户端下一轮回放了我们上一轮的答复就沿用同一网页对话,
+//!    不新建、不重复注入,而且只发增量(见 [`AgentLoop::continuation_payload`]);
 //!    普通轮次走 `send()` 只发载荷;唯一例外是**解析失败后的重试**:那一条会把完整强提示词
 //!    连同修正提示一起重发(模型被客户端格式带偏时,只补一句修正往往继续跑偏);
 //! 2. 轮换的顺序必须是"先在旧对话里总结,再开新对话",顺序反了就丢上下文;
@@ -153,7 +155,12 @@ pub enum AgentEvent {
 
 pub struct AgentRun {
     pub session_id: Option<String>,
+    /// 本轮客户端输入:最后一条 user 消息,或尾部连续的 tool 结果
     pub input: String,
+    /// 客户端回放的历史(不含本轮输入):用来认出"这是同一个对话"并只发增量
+    pub transcript: String,
+    /// 客户端对话锚点(历史里第一条 user 消息):客户端开新聊天时它会变
+    pub anchor: String,
     pub tools: Vec<String>,
     /// 非空表示客户端工具模式:模型请求工具时交还客户端,而不是本地执行
     pub client_tools: Vec<ClientToolSpec>,
@@ -165,6 +172,22 @@ pub struct AgentRun {
     pub cancel: Option<tokio::sync::watch::Receiver<bool>>,
     /// 需要上传的文件路径列表(在发送消息前上传到当前对话)
     pub file_paths: Vec<String>,
+}
+
+impl AgentRun {
+    /// 客户端这一次发来的全部内容(回放的历史 + 本轮输入)。
+    ///
+    /// 新建网页对话的首条消息、以及用量统计的输入口径都用它:沿用已有对话时只在载荷里
+    /// 发增量,但客户端看到的上下文始终是完整的这一份。
+    pub fn client_input(&self) -> String {
+        let transcript = self.transcript.trim();
+        let input = self.input.trim();
+        if transcript.is_empty() {
+            input.to_string()
+        } else {
+            format!("{transcript}\n\n{input}")
+        }
+    }
 }
 
 pub struct AgentLoop {
@@ -218,9 +241,41 @@ impl AgentLoop {
         }
     }
 
-    /// 沿用已有会话时,把客户端这次的内容包成一条普通消息。
-    fn user_turn(&self, input: &str) -> String {
-        format!("【用户消息】\n{}\n\n请只输出一个 JSON 对象。", input.trim())
+    /// 沿用已有网页对话时的载荷:网页里已经有前面的对话,这里只补客户端新增的部分。
+    ///
+    /// 对齐判据是 [`ClientTurn::known_prefix`](crate::conversation::ClientTurn::known_prefix):
+    /// 历史接得上就只发增量,接不上(客户端裁剪/改写过历史、刚轮换到新对话)就整段回放——
+    /// 宁可多花 token 也不丢信息。
+    async fn continuation_payload(&self, session_id: &str, run: &AgentRun) -> Result<String> {
+        const REPLAYED: &str = "【客户端回放的历史(可能含网页已见内容)】\n";
+        const NEW_HISTORY: &str = "【客户端新增历史】\n";
+        const TURN: &str = "【本轮客户端消息】\n";
+
+        let seen = self.backend.client_turn(session_id).await?;
+        let transcript = run.transcript.as_str();
+        let mut payload = String::new();
+
+        if !transcript.trim().is_empty() {
+            // 网页已见内容 = 客户端上一轮回放的历史 + 那一轮的输入 + 我们回给它的那条答复
+            match transcript.strip_prefix(seen.known_prefix().as_str()) {
+                Some(fresh) if !fresh.trim().is_empty() => {
+                    payload.push_str(NEW_HISTORY);
+                    payload.push_str(fresh.trim());
+                    payload.push_str("\n\n");
+                }
+                Some(_) => {}
+                None => {
+                    payload.push_str(REPLAYED);
+                    payload.push_str(transcript.trim());
+                    payload.push_str("\n\n");
+                }
+            }
+        }
+
+        payload.push_str(TURN);
+        payload.push_str(run.input.trim());
+        payload.push_str("\n\n请接着这条消息继续决策,只输出一个 JSON 对象。");
+        Ok(payload)
     }
 
     fn environment_hint(&self) -> String {
@@ -387,18 +442,41 @@ impl AgentLoop {
         let mut rotations: Vec<RotationRecord> = Vec::new();
 
         // ---------- 会话准备 ----------
+        // 网页对话"建一次、聊很多轮":客户端没指定 session_id 时,先看它这一轮回放的历史里
+        // 有没有我们上一轮交给它的答复——有就证明是同一条对话,沿用;没有才新建并注一次强提示词。
+        let client_input = run.client_input();
         let mut new_run: Option<(String, String, Reply)> = None; // (session_id, conversation_id, reply)
-        let (session_id, mut pending) = match run.session_id.as_deref() {
+        let explicit = run.session_id.as_deref();
+
+        let reused = match explicit {
             Some(sid) if self.backend.state(sid).await.is_ok() => {
-                debug!(session_id = sid, "沿用已有会话,不重复注入强提示词");
-                (sid.to_string(), Some(self.user_turn(&input)))
+                debug!(session_id = sid, "客户端指定了会话:沿用该网页对话");
+                Some(sid.to_string())
             }
-            existing => {
-                let sid = match existing {
-                    Some(sid) => sid.to_string(),
-                    None => Self::new_session_id(),
-                };
-                let first_message = self.prompt.compose_first(&ctx, &input);
+            None => {
+                let matched = self
+                    .backend
+                    .match_session(&run.anchor, &run.transcript, &run.model.id)
+                    .await?;
+                if let Some(sid) = &matched {
+                    debug!(session_id = %sid, "客户端回放的历史里带着我们上一轮的答复:沿用同一网页对话");
+                }
+                matched
+            }
+            // 指定了不存在的会话:按新建处理,下面的提示词里会带上这条信息
+            Some(_) => None,
+        };
+
+        let (session_id, mut pending) = match reused {
+            Some(sid) => {
+                let payload = self.continuation_payload(&sid, &run).await?;
+                (sid, Some(payload))
+            }
+            None => {
+                let sid = explicit
+                    .map(str::to_string)
+                    .unwrap_or_else(Self::new_session_id);
+                let first_message = self.prompt.compose_first(&ctx, &client_input);
                 let (conversation_id, reply) =
                     self.backend.start(&sid, &first_message, &run.model).await?;
                 self.backend.remember_prompt(&sid, &prompt_block).await?;
@@ -439,7 +517,8 @@ impl AgentLoop {
             Some((_, cid, _)) => cid.clone(),
             None => self.backend.conversation_id(&session_id).await?,
         };
-        if run.session_id.is_some() && new_run.is_none() {
+        // 没有新建会话 = 沿用了已有网页对话,这一条请求不该算作一次新对话
+        if new_run.is_none() {
             self.store.record_request(&session_id, &run.model.id, false);
         }
         let mut next_reply = new_run.take().map(|(_, _, reply)| reply);

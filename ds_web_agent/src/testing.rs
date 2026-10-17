@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 
 use crate::browser::{BrowserAdapter, LoginState};
 use crate::config::ModelVariant;
-use crate::conversation::{ChatBackend, Reply, SessionRecord};
+use crate::conversation::{ChatBackend, ClientTurn, Reply, SessionRecord, SessionState};
 use crate::error::{AppError, Result};
 
 fn make_reply(text: &str, thinking_chars: usize) -> Reply {
@@ -188,6 +188,8 @@ pub struct MockChatBackend {
     pub rounds: AtomicUsize,
     pub thinking_chars: AtomicUsize,
     record: Mutex<Option<SessionRecord>>,
+    /// 对客户端可见的上一轮往返:供伪造后端模拟"客户端回放历史 → 沿用同一对话"
+    client: Mutex<ClientTurn>,
     seq: AtomicUsize,
 }
 
@@ -205,6 +207,7 @@ impl MockChatBackend {
             rounds: AtomicUsize::new(0),
             thinking_chars: AtomicUsize::new(0),
             record: Mutex::new(None),
+            client: Mutex::new(ClientTurn::default()),
             seq: AtomicUsize::new(0),
         }
     }
@@ -323,6 +326,52 @@ impl ChatBackend for MockChatBackend {
     }
 
     async fn remember_prompt(&self, _session_id: &str, _prompt_block: &str) -> Result<()> {
+        Ok(())
+    }
+
+    /// 与生产路径同一套判据(直接调 [`affinity_match`]),避免测试里另立一套徽标准。
+    async fn match_session(
+        &self,
+        anchor: &str,
+        transcript: &str,
+        model_id: &str,
+    ) -> Result<Option<String>> {
+        let client = self.client.lock().unwrap().clone();
+        let record = self.record.lock().unwrap();
+        let Some(record) = record.as_ref() else {
+            return Ok(None);
+        };
+        let mut state = SessionState::new(record.session_id.as_str(), &record.conversation_id, &record.model_id);
+        state.record_client_turn(client);
+        Ok(
+            crate::conversation::conversation_adapter::affinity_match(
+                std::iter::once(&state),
+                anchor,
+                transcript,
+                model_id,
+            )
+            .map(|matched| matched.session_id.clone()),
+        )
+    }
+
+    async fn client_turn(&self, session_id: &str) -> Result<ClientTurn> {
+        if self.record.lock().unwrap().is_none() {
+            return Err(AppError::SessionNotFound(session_id.to_string()));
+        }
+        Ok(self.client.lock().unwrap().clone())
+    }
+
+    async fn remember_client_turn(&self, session_id: &str, turn: ClientTurn) -> Result<()> {
+        if self.record.lock().unwrap().is_none() {
+            return Err(AppError::SessionNotFound(session_id.to_string()));
+        }
+        let mut client = self.client.lock().unwrap();
+        if client.anchor.trim().is_empty() {
+            client.anchor = turn.anchor.trim().to_string();
+        }
+        client.transcript = turn.transcript;
+        client.input_line = turn.input_line;
+        client.answer_line = turn.answer_line;
         Ok(())
     }
 

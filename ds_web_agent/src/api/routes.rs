@@ -26,7 +26,7 @@ use crate::agent::{AgentLoop, AgentRun, ClientToolSpec};
 use crate::api::models::*;
 use crate::browser::{BrowserAdapter, LoginState};
 use crate::config::AppConfig;
-use crate::conversation::ChatBackend;
+use crate::conversation::{ChatBackend, ClientTurn};
 use crate::error::{AppError, Result};
 use crate::storage::Store;
 use crate::tools::ToolRegistry;
@@ -217,11 +217,6 @@ async fn openai_chat_completions(
             param: Some("messages".into()),
         }
     })?;
-    let input = if transcript.trim().is_empty() {
-        last_input
-    } else {
-        format!("【对话上下文(由客户端提供)】\n{transcript}\n\n【本轮客户端消息】\n{last_input}")
-    };
 
     // 工具由客户端声明、客户端执行:本地不注册也不执行,只把声明注入强提示词,
     // 模型请求时原样以 tool_calls 交还,等客户端用 role="tool" 回传结果后再来一轮。
@@ -236,9 +231,15 @@ async fn openai_chat_completions(
         file_paths.extend(msg.extract_file_paths());
     }
 
+    // 客户端回放的历史、锚点、本轮输入行都原样交给 AgentLoop 与记账逻辑:
+    // 下一轮靠它们识别"是不是同一条对话",命中就沿用同一个网页对话(不新建、不重复注入)并只发增量。
+    let anchor = conversation_anchor(&req.messages);
+    let input_line = input_history_line(&req.messages);
     let run = AgentRun {
         session_id: req.session_id.clone(),
-        input,
+        input: last_input,
+        transcript: transcript.clone(),
+        anchor: anchor.clone(),
         tools: Vec::new(),
         client_tools,
         max_rounds: state.cfg.clamp_max_rounds(req.max_rounds),
@@ -247,7 +248,7 @@ async fn openai_chat_completions(
         cancel: None,
         file_paths,
     };
-    let input_chars = run.input.chars().count();
+    let input_chars = run.client_input().chars().count();
     let meta = OpenAiChunkMeta::new(&model_id);
 
     let outcome = state.agent.run(run).await.inspect_err(|e| {
@@ -255,6 +256,27 @@ async fn openai_chat_completions(
             .store
             .record_error(None, e.code(), &e.to_string(), &format!("model={model_id}"));
     })?;
+
+    // 本轮对客户端可见的往返记账:下一轮它回放这段答复,就能认出还是同一个对话。
+    // 记账失败不让本轮答复作废,只是下一轮会退回整段回放。
+    let turn = ClientTurn {
+        anchor,
+        transcript,
+        input_line,
+        answer_line: match &outcome.tool_call {
+            Some(call) => {
+                assistant_replay_line("", Some((&call.name, &call.arguments.to_string())))
+            }
+            None => assistant_replay_line(&outcome.content, None),
+        },
+    };
+    if let Err(e) = state
+        .backend
+        .remember_client_turn(&outcome.session_id, turn)
+        .await
+    {
+        tracing::warn!(session_id = %outcome.session_id, error = %e, "记录客户端往返失败:下一轮会退回整段回放");
+    }
 
     if state.cfg.storage.record_http_bodies {
         state.store.append_event(
@@ -521,13 +543,17 @@ mod tests {
     use crate::testing::{MockChatBackend, NoopBrowser};
 
     fn state_with(cfg: AppConfig) -> AppState {
+        state_with_backend(cfg, Arc::new(MockChatBackend::new(vec![])))
+    }
+
+    fn state_with_backend(cfg: AppConfig, backend: Arc<MockChatBackend>) -> AppState {
         let cfg = Arc::new(cfg);
         let store = Arc::new(Store::memory().expect("内存库"));
         let browser: Arc<dyn BrowserAdapter> = Arc::new(NoopBrowser::default());
-        let backend: Arc<dyn ChatBackend> = Arc::new(MockChatBackend::new(vec![]));
+        let backend_dyn: Arc<dyn ChatBackend> = backend;
         let registry = Arc::new(ToolRegistry::new(&cfg));
         let agent = Arc::new(AgentLoop::new(
-            backend.clone(),
+            backend_dyn.clone(),
             registry.clone(),
             cfg.clone(),
             store.clone(),
@@ -535,11 +561,106 @@ mod tests {
         AppState {
             cfg,
             browser,
-            backend,
+            backend: backend_dyn,
             agent,
             registry,
             store,
         }
+    }
+
+    /// 直接打一枪 `/v1/chat/completions`,拿到 JSON 响应体。
+    async fn chat(app: &axum::Router, body: Value) -> Value {
+        use axum::body::Body;
+        use axum::http::Request as HttpRequest;
+        use tower::ServiceExt;
+
+        let response = app
+            .clone()
+            .oneshot(
+                HttpRequest::builder()
+                    .method("POST")
+                    .uri("/v1/chat/completions")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .expect("路由可达");
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("读响应体");
+        serde_json::from_slice(&bytes).expect("JSON 响应")
+    }
+
+    /// 一个网页对话要能聊很多轮:客户端第二轮不带 `session_id`,只要历史里回放着我们上一轮的
+    /// 答复,就沿用同一个网页对话——不新建、不重复注入强提示词,而且只发增量。
+    #[tokio::test]
+    async fn replayed_history_reuses_the_web_conversation() {
+        let mut cfg = AppConfig::default();
+        cfg.server.api_token = String::new(); // 空 token = 仅本机不校验,测试只关心会话沿用
+        let model = cfg.models.default_variant().expect("默认变体存在").id.clone();
+        let backend = Arc::new(MockChatBackend::new(vec![]));
+        let app = router(state_with_backend(cfg, backend.clone()));
+
+        let first = chat(
+            &app,
+            serde_json::json!({
+                "model": model,
+                "messages": [{"role": "user", "content": "现在几点"}],
+            }),
+        )
+        .await;
+        let answer = first["choices"][0]["message"]["content"]
+            .as_str()
+            .unwrap_or_else(|| panic!("首个响应里没有答复: {first}"))
+            .to_string();
+
+        let second = chat(
+            &app,
+            serde_json::json!({
+                "model": model,
+                "messages": [
+                    {"role": "user", "content": "现在几点"},
+                    {"role": "assistant", "content": answer},
+                    {"role": "user", "content": "那明天呢"},
+                ],
+            }),
+        )
+        .await;
+
+        assert_eq!(
+            backend.injections().len(),
+            1,
+            "同一网页对话只注入一次强提示词"
+        );
+        let payload = backend.sent().last().cloned().expect("至少发过一条消息");
+        assert!(payload.contains("【本轮客户端消息】\n那明天呢"), "{payload}");
+        assert!(
+            !payload.contains("工具调用代理"),
+            "续轮不能带强提示词:{payload}"
+        );
+        assert_eq!(
+            first["ds_webagent"]["session_id"], second["ds_webagent"]["session_id"],
+            "两轮应当落在同一条会话上"
+        );
+        assert_eq!(
+            first["ds_webagent"]["conversation_id"], second["ds_webagent"]["conversation_id"],
+            "两轮应当落在同一个网页对话上"
+        );
+
+        // 客户端开了新聊天(锚点变了、历史里没有我们的答复):新对话 + 重新注入一次
+        let third = chat(
+            &app,
+            serde_json::json!({
+                "model": model,
+                "messages": [{"role": "user", "content": "另起一个话题"}],
+            }),
+        )
+        .await;
+        assert_eq!(backend.injections().len(), 2, "新聊天要重新注入一次强提示词");
+        assert_ne!(
+            third["ds_webagent"]["session_id"], second["ds_webagent"]["session_id"]
+        );
     }
 
     fn state() -> AppState {
