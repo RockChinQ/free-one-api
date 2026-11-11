@@ -125,6 +125,14 @@
       .markdown-section h1 { font-size: 1.55rem; }
     }
   </style>
+  <!-- Self-hosted Umami (cookieless visitor stats); only reports from the production domain. -->
+  <script defer src="https://stats.rcpd.cc/k.js" data-website-id="2b129899-6df9-480d-80bd-15ff5aef5631" data-domains="free-one-api.rockchin.top"></script>
+  <script>
+    // docsify navigates by hash, which the tracker does not follow on its own: report each page change.
+    window.addEventListener('hashchange', function () {
+      if (window.umami) window.umami.track();
+    });
+  </script>
 </head>
 <body>
   <noscript>
