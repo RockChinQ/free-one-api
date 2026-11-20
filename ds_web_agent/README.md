@@ -199,8 +199,12 @@ DeepSeek 改版导致找不到元素时,**只改 `config.toml` 的 `[selectors]`
 
 ```toml
 [selectors]
-chat_input = ["textarea#chat-input", "div[contenteditable='true']"]
+chat_input = ["textarea#chat-input", "textarea[name='search']", "div[contenteditable='true']"]
 ```
+
+已踩过的改版:输入框的 `id="chat-input"` 已被移除,现在是无 id 的 `<textarea name="search">`;
+输入框下方的「联网搜索」开关已改名为「智能搜索」(英文界面为 Search / DeepThink)。
+内置候选列表已经兼容这两处,`text=` 形式的开关候选也能正确读到状态。
 
 支持普通 CSS 选择器,也支持 `text=按钮文字` 形式(按可见文本匹配)。`assistant_extract_js` 可填一段自定义提取脚本,占位符 `__SELECTORS__` / `__EXCLUDES__` 会被自动替换。
 

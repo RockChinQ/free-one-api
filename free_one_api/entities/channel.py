@@ -85,22 +85,26 @@ class Channel:
         return num_tokens
     
     async def heartbeat(self, timeout: int=300) -> int:
-        """Call adapter test, returns fail count."""
-        
+        """Call adapter test, returns fail count.
+
+        Only a failed probe increases `fail_count`; a successful one clears it.
+        (The previous implementation returned from a `finally` block, so the
+        count grew on every round even when the probe succeeded and the
+        watchdog ended up disabling perfectly healthy channels.)
+        """
         try:
             start = time.time()
             succ, err = await asyncio.wait_for(self.adapter.test(), timeout=timeout)
-            if succ:
-                latency = int((time.time() - start)*100)/100
-                self.fail_count = 0
-                self.latency = latency
-                return 0
-            else:
-                self.fail_count += 1
-                return self.fail_count
-        finally:
+        except Exception:
             self.fail_count += 1
             return self.fail_count
+
+        if succ:
+            self.latency = int((time.time() - start)*100)/100
+            self.fail_count = 0
+        else:
+            self.fail_count += 1
+        return self.fail_count
 
     def preserve_runtime_vars(
         self,

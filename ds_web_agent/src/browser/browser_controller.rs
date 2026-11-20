@@ -749,26 +749,28 @@ impl ChromiumoxideAdapter {
             warn!(toggle = name, "未配置开关选择器,跳过");
             return Ok(());
         }
+        let Some(state_on) = self.read_toggle_state(candidates, name).await? else {
+            // 开关可能因账号/模型差异不存在,这里只告警不阻断
+            warn!(toggle = name, "未找到开关,按页面当前状态继续");
+            return Ok(());
+        };
+        if state_on == want {
+            debug!(toggle = name, on = want, "开关状态已符合期望");
+            return Ok(());
+        }
+
         let resolved = match self.resolve(candidates).await? {
             Some(r) => r,
             None => {
-                // 开关可能因账号/模型差异不存在,这里只告警不阻断
-                warn!(toggle = name, "未找到开关,按页面当前状态继续");
+                warn!(toggle = name, "开关在读取状态后消失,跳过");
                 return Ok(());
             }
         };
-        let state = self.toggle_state(&resolved.selector).await?;
-        let state_on = state.get("on").and_then(Value::as_bool);
-        if state_on == Some(want) {
-            debug!(toggle = name, on = want, "开关状态已符合期望");
-            self.release(&resolved).await;
-            return Ok(());
-        }
         let _ = resolved.element.click().await.map_err(AppError::browser)?;
         self.release(&resolved).await;
         sleep(Duration::from_millis(300)).await;
-        let after = self.toggle_state(&resolved.selector).await?;
-        let after_on = after.get("on").and_then(Value::as_bool);
+
+        let after_on = self.read_toggle_state(candidates, name).await?;
         if after_on != Some(want) {
             warn!(
                 toggle = name,
@@ -780,6 +782,38 @@ impl ChromiumoxideAdapter {
             info!(toggle = name, on = want, "已设置开关");
         }
         Ok(())
+    }
+
+    /// 解析开关并读它的当前状态,读完立刻清理临时句柄。
+    ///
+    /// `toggle_state()` 内部走 `document.querySelector()`,吃不下 `text=xxx` 这种候选
+    /// (那是本项目的扩展语法)。所以 `text=` 命中时必须用临时句柄属性去查,否则状态
+    /// 永远是 `null`,调用方会每次请求都去点一下开关,把已经开的开关点关。
+    ///
+    /// 返回 `None` 表示"找不到开关,或判定不出状态":调用方只告警不阻断,
+    /// 绝不在状态未知时盲点——盲点会把已开启的开关点成关闭。
+    async fn read_toggle_state(
+        &self,
+        candidates: &[String],
+        name: &str,
+    ) -> Result<Option<bool>> {
+        let resolved = match self.resolve(candidates).await? {
+            Some(r) => r,
+            None => return Ok(None),
+        };
+        let query = if resolved.used_temp_handle {
+            format!("[{}]", TEMP_HANDLE_ATTR)
+        } else {
+            resolved.selector.clone()
+        };
+        let state = self.toggle_state(&query).await;
+        self.release(&resolved).await;
+        let state = state?;
+        let on = state.get("on").and_then(Value::as_bool);
+        if on.is_none() {
+            warn!(toggle = name, state = %state, "无法判定开关状态,按页面当前状态继续");
+        }
+        Ok(on)
     }
 
     async fn toggle_state(&self, selector: &str) -> Result<Value> {
@@ -1007,9 +1041,27 @@ const JS_TOGGLE_STATE: &str = r#"(function(){
       }
     }
   }
-  var cls = (el.className || '') + '';
+  var cls = ((el.className || '') + '').toLowerCase();
+  // 按 class 的“单个词”匹配,不做子串匹配:否则 marker "on" 会命中
+  // "ds-toggle-button"(它正好以 "on" 结尾),每个开关都被判成已开启,永远不会去点。
+  // 规则:token 等于 marker,或 token 以 "-"/"_" 分隔的 marker 结尾
+  // (BEM 修饰符:ds-toggle-button--selected 命中 selected)。
+  var tokens = cls.split(/\s+/);
+  function hasMarker(m){
+    if (!m) return false;
+    for (var y = 0; y < tokens.length; y++) {
+      var t = tokens[y];
+      if (!t) continue;
+      if (t === m) return true;
+      if (t.length > m.length && t.slice(-m.length) === m) {
+        var sep = t.charAt(t.length - m.length - 1);
+        if (sep === '-' || sep === '_') return true;
+      }
+    }
+    return false;
+  }
   for (var j = 0; j < markers.length; j++) {
-    if (cls.toLowerCase().indexOf(markers[j]) >= 0) {
+    if (hasMarker((markers[j] || '').toLowerCase())) {
       return JSON.stringify({ found: true, on: true, via: 'class:' + markers[j] });
     }
   }

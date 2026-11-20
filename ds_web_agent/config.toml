@@ -149,6 +149,7 @@ type_strategy = "type_str_verify"
 # 输入框候选(按顺序尝试,命中第一个可用元素)
 login_input = [
   "textarea#chat-input",
+  "textarea[name='search']",
   "textarea[placeholder*='DeepSeek']",
   "textarea[placeholder*='给 DeepSeek']",
   "div[contenteditable='true'][role='textbox']",
@@ -178,7 +179,9 @@ new_chat_button = [
 ]
 chat_input = [
   "textarea#chat-input",
+  "textarea[name='search']",
   "textarea[placeholder*='DeepSeek']",
+  "textarea[placeholder*='给 DeepSeek']",
   "div[contenteditable='true'][role='textbox']",
   "textarea",
 ]
@@ -254,17 +257,26 @@ user_message = [
 ]
 
 # ── 联网搜索 / 深度思考开关 ──
-# 状态判定属性(按顺序读取),值为真则视为已开启
-toggle_checked_attr = ["aria-checked", "data-state"]
+# 状态判定属性(按顺序读取),值为真则视为已开启。网页版的开关是一个
+# role=button 的 chip,开启时带 aria-pressed="true" 和 ds-toggle-button--selected。
+toggle_checked_attr = ["aria-pressed", "aria-checked", "data-state"]
 toggle_checked_values = ["true", "checked", "on", "active"]
-toggle_checked_class_markers = ["checked", "active", "selected", "on"]
+# 注意:这里按 class 的**单个词**匹配,不做子串匹配 —— 否则 "on" 会命中
+# "ds-toggle-button" 里的 "on",让每个开关都被误判为已开启。
+toggle_checked_class_markers = ["checked", "active", "selected", "toggle-button--on"]
 toggle_search = [
+  "text=智能搜索",
+  "text=联网搜索",
+  "text=Search",
   "button[aria-label*='联网']",
+  "button[aria-label*='智能搜索']",
   "[data-testid='search-toggle']",
   "div[class*='search-toggle']",
   "div[class*='web-search']",
 ]
 toggle_think = [
+  "text=深度思考",
+  "text=DeepThink",
   "button[aria-label*='深度思考']",
   "[data-testid='think-toggle']",
   "div[class*='think-toggle']",

@@ -45,10 +45,28 @@ docker compose -f docker-compose.dswebagent.yaml up -d --build   # 用本仓库 
 
 ### 报 No suitable channel found？
 
-选渠道有硬性过滤：渠道必须启用、适配器的 supported_path() 必须等于请求路径（/v1/chat/completions）、模型名必须在渠道支持的模型列表里。检查：
+选渠道有硬性过滤：渠道必须启用、适配器的 supported_path() 必须等于请求路径（/v1/chat/completions）、模型名必须是该渠道认的名字。检查：
 
 - 渠道是不是被心跳自动禁用了（状态不是绿色）；
 - 请求的 model 是不是该渠道认的名字。
+
+前两条都正常时，看错误体里的 `param`：如果写成 `model=xxx`，就是模型名没被渠道接受。
+
+- `ds-webagent/deepseek-web` 与 `aeliusai/aelius-web` 接受任意模型名（不认识的名字落到各自的 default_model），一般不会因为这个报 404；
+- 其它适配器只认 `supported_models()` 里的名字，客户端写别的（比如用 Claude 的客户端发 `claude-3-5-sonnet`）就会 404。解决办法是在渠道的 `model_mapping` 里把客户端用的名字映射过来。
+
+### 渠道明明没坏，却被心跳自动禁用了？
+
+`watchdog.heartbeat.fail_limit`（默认 3）次连续失败后自动禁用。旧版本的心跳有个 bug：即使探测成功也会把失败计数加一，于是健康渠道每轮都被判失败、两三轮后就被禁用。现在只有探测失败才累加计数，成功会清零。升级后如果渠道已经变成禁用状态，手动点一下启用即可。
+
+### 网页版改版了，DS_WebAgent 报找不到输入框 / 开关点了没反应？
+
+DeepSeek 改版过几次，已经踩到的两处：
+
+- 输入框的 `id="chat-input"` 没了，现在是 `<textarea name="search">`；
+- 输入框下方的开关从「联网搜索」改名叫「智能搜索」（英文 Search / DeepThink）。
+
+这些都在 `ds_web_agent/config.toml` 的 `[selectors]` 里，候选列表按顺序尝试，加一条就行，不用改代码。开关是带 `aria-pressed` 的 chip，状态优先读这个属性。如果状态读不出来，桥接只会告警、不会盲点——盲点会把已经开启的开关点成关闭。
 
 ### 心跳把渠道自动禁用了？
 
