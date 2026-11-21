@@ -32,6 +32,16 @@ class LLMLibAdapter(metaclass=abc.ABCMeta):
         """Return models supported by this reverse lib."""
         return []
 
+    def supports_model(self, model: str) -> bool:
+        """True if this adapter can serve a request for `model`.
+
+        Defaults to a strict membership test against `supported_models()`.
+        Adapters with a fallback model (e.g. one that silently maps unknown
+        names onto a default) must override this, otherwise the channel
+        selector rejects the request before the adapter ever sees it.
+        """
+        return model in self.supported_models()
+
     @abc.abstractmethod
     def function_call_supported(self) -> bool:
         """True if this adapter supports function call."""

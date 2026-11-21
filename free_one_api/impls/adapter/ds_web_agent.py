@@ -62,6 +62,12 @@ class DSWebAgentAdapter(llm.LLMLibAdapter):
     def supported_models(self) -> list[str]:
         return ["ds-web-search", "ds-web-think", "ds-web-search-think"]
 
+    def supports_model(self, model: str) -> bool:
+        # 任意模型名都能接:不认识的名字由 _resolve_model() 落到 default_model。
+        # 若这里按 supported_models() 严格过滤,选渠道阶段就会 404 channel_not_found,
+        # 客户端传 gpt-4o / deepseek-chat 这类名字时永远走不到这里的兜底。
+        return True
+
     def function_call_supported(self) -> bool:
         return True
 

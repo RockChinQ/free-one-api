@@ -89,6 +89,10 @@ class AeliusAdapter(llm.LLMLibAdapter):
     def supported_models(self) -> list[str]:
         return ["aelius", "aelius-web", "aelius-chat"]
 
+    def supports_model(self, model: str) -> bool:
+        # 站点只有一个网页对话,模型名不参与上游请求:任何名字都接,不做模型过滤。
+        return True
+
     def function_call_supported(self) -> bool:
         return False
 

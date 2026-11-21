@@ -166,12 +166,9 @@ class ChannelManager(mgr.AbsChannelManager):
         channel_copy_tmp = []
         
         for chan in channel_copy:
-            models = []
-            left_model_names = list(chan.model_mapping.keys())
-            models.extend(left_model_names)
-            models.extend(chan.adapter.supported_models())
-            
-            if model_name in models:
+            # 协议层映射名(客户端名 -> 上游名)优先;适配器自己认不认这个名字
+            # 交给 adapter.supports_model(),有兜底模型的适配器可以放行任意名字。
+            if model_name in chan.model_mapping.keys() or chan.adapter.supports_model(model_name):
                 channel_copy_tmp.append(chan)
                 
         channel_copy: list[channel.Channel] = channel_copy_tmp
@@ -181,6 +178,7 @@ class ChannelManager(mgr.AbsChannelManager):
                 404,
                 "channel_not_found",
                 "No suitable channel found. You may need to contact your admin or check the documentation at https://github.com/RockChinQ/free-one-api",
+                param="model=" + str(model_name),
             )
         
         # get scores of each option
